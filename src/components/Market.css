@@ -14,6 +14,8 @@
   justify-content: space-between;
   margin-bottom: 6px;
   flex-shrink: 0;
+  min-height: 30px;        /* 锁定最小高度,避免"跳过建造"按钮出现/消失时高度跳动 */
+  box-sizing: border-box;
 }
 .market__head h3 { margin: 0; font-size: 1rem; }
 .market__skip {
@@ -34,17 +36,25 @@
   padding-right: 4px;
 }
 
-.market__group { margin-top: 8px; }
-.market__group:first-child { margin-top: 0; }
-.market__group h4 {
-  margin: 0 0 4px;
+.market__row { margin-top: 8px; }
+.market__row:first-child { margin-top: 0; }
+
+/* 标题行:与卡片网格使用相同 5 列,允许标题按 span 跨列 */
+.market__titles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.market__title {
+  margin: 0;
   font-size: .78rem;
   color: #888;
   font-weight: 600;
 }
 .market__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
 .card {
@@ -97,7 +107,7 @@
 
 @media (prefers-color-scheme: dark) {
   .market { background: #1c2028; border-color: #353a45; }
-  .market__group h4 { color: #aaa; }
+  .market__title { color: #aaa; }
   .market__skip { background: #2a2f3a; color: #eee; border-color: #444b58; }
   .card { background: #2a2f3a; border-color: #444b58; color: #eee; }
   .card__desc { color: #bbb; }

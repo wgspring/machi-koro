@@ -6,6 +6,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-height: 160px;        /* 整体最小高度,刚好能容纳 3 行预览 */
+  box-sizing: border-box;
 }
 
 /* 三栏:左预览 | 中骰子 | 右预览 */
@@ -14,6 +16,7 @@
   grid-template-columns: 1fr auto 1fr;
   gap: 12px;
   align-items: stretch;
+  min-height: 128px;        /* 主体最小高度 */
 }
 .dice__center {
   display: flex;
@@ -22,6 +25,15 @@
   gap: 8px;
   min-width: 220px;
   justify-content: center;
+}
+/* 操作区固定最小高度,避免不同阶段按钮数量差异引起跳动 */
+.dice__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  min-height: 36px;
 }
 
 .dice__display {
@@ -54,12 +66,6 @@
   border-radius: 6px;
   font-weight: 600;
   transition: background .25s, color .25s;
-}
-.dice__actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 .dice__actions button {
   padding: 5px 14px;
@@ -134,8 +140,10 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-height: 96px;
+  /* 限高:刚好显示 3 行 pv__item,超出滚动 */
+  max-height: 66px;
   overflow-y: auto;
+  padding-right: 2px;
 }
 .pv__item {
   display: flex;

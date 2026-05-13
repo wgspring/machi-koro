@@ -80,7 +80,7 @@
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 6px;
   flex-shrink: 0;
 }
@@ -94,8 +94,7 @@
   grid-template-columns: 1fr auto;
   grid-template-areas:
     "name cost"
-    "desc desc"
-    "hint hint";
+    "desc desc";
   gap: 1px 6px;
   align-items: center;
   padding: 5px 8px;
@@ -109,15 +108,26 @@
   color: #888;
   transition: transform .12s, box-shadow .15s, background .15s, border-color .15s;
 }
-.pp__lmName { grid-area: name; font-weight: 600; font-size: .82rem; }
+.pp__lmName {
+  grid-area: name;
+  font-weight: 600;
+  font-size: .82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .pp__lmCost { grid-area: cost; font-size: .72rem; }
 .pp__lmDesc { grid-area: desc; font-size: .65rem; color: #aaa; line-height: 1.25; }
 .pp__lmHint {
-  grid-area: hint;
-  margin-top: 1px;
-  font-size: .65rem;
+  font-size: .62rem;
   color: #c89400;
   font-weight: 700;
+  background: #fff8e0;
+  border: 1px solid #f0d480;
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 1.4;
 }
 
 .pp__lm--built .pp__lmBtn {

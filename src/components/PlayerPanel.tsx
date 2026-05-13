@@ -28,7 +28,7 @@ function BuildingList({ player }: { player: PlayerState }) {
               : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
           </span>
           <span className="pp__name">{card.name}</span>
-          <span className="pp__count">×{n}</span>
+          {card.color !== 'purple' && <span className="pp__count">×{n}</span>}
         </li>
       ))}
     </ul>
@@ -59,12 +59,14 @@ function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boole
               onClick={() => dispatch({ type: 'BUY_LANDMARK', landmarkId: lm.id })}
               title={lm.description}
             >
-              <span className="pp__lmName">{lm.name}</span>
+              <span className="pp__lmName">
+                {lm.name}
+                {canBuy && <span className="pp__lmHint">点击建造</span>}
+              </span>
               <span className="pp__lmCost">
                 {built ? '✓ 已建成' : `${lm.cost} 币`}
               </span>
               <span className="pp__lmDesc">{lm.description}</span>
-              {canBuy && <span className="pp__lmHint">点击建造</span>}
             </button>
           </li>
         );
