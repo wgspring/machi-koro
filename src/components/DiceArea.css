@@ -46,10 +46,12 @@
   color: #333;
 }
 .dice__face {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 44px;
   height: 44px;
-  line-height: 44px;
+  line-height: 1;
   text-align: center;
   background: #f6f8fb;
   border: 2px solid #cfd5e0;

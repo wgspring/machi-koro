@@ -21,12 +21,17 @@
 .market__skip {
   padding: 4px 10px;
   font-size: .82rem;
-  border: 1px solid #c9cfd9;
-  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--p-color) 50%, transparent);
+  background: var(--p-soft);
+  color: var(--p-strong);
   border-radius: 6px;
   cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
 }
-.market__skip:hover { background: #f0f3fa; }
+.market__skip:hover {
+  background: color-mix(in srgb, var(--p-color) 22%, white);
+  border-color: var(--p-color);
+}
 
 /* 卡池滚动容器 */
 .market__scroll {
@@ -60,7 +65,7 @@
 .market__grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
+  gap: 12px;
 }
 .card {
   position: relative;
@@ -189,7 +194,6 @@
 @media (prefers-color-scheme: dark) {
   .market { background: #1c2028; border-color: #353a45; }
   .market__title { color: #aaa; }
-  .market__skip { background: #2a2f3a; color: #eee; border-color: #444b58; }
   .card { background: #2a2f3a; border-color: #444b58; color: #eee; }
   .card__desc { color: #bbb; }
   .card__act { background: rgba(255,255,255,.1); color: #ddd; }
