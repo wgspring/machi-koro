@@ -2,6 +2,7 @@ import { useGame } from '../state/GameContext';
 import { CATALOG } from '../data/engine';
 import { LANDMARKS } from '../data/cards';
 import { getBuildingIcon, getLandmarkIcon } from '../data/cardIcons';
+import { getLandmarkArt } from '../data/cardArt';
 import type { PlayerState } from '../data/types';
 import './PlayerPanel.css';
 
@@ -60,6 +61,7 @@ function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boole
               disabled={!canBuy}
               onClick={() => dispatch({ type: 'BUY_LANDMARK', landmarkId: lm.id })}
               title={lm.description}
+              style={{ ['--lm-art' as string]: `url("${getLandmarkArt(lm.id)}")` }}
             >
               <span className="pp__lmName">
                 <span className="pp__lmIcon" aria-hidden>{getLandmarkIcon(lm.id)}</span>

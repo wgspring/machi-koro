@@ -107,7 +107,25 @@
   font-size: .78rem;
   color: #888;
   transition: transform .12s, box-shadow .15s, background .15s, border-color .15s;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
+/* 地标插画背景 */
+.pp__lmBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--lm-art, none);
+  background-size: cover;
+  background-position: center;
+  opacity: .22;
+  pointer-events: none;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 35%, #000 100%);
+          mask-image: linear-gradient(180deg, transparent 0%, #000 35%, #000 100%);
+}
+.pp__lmBtn > * { position: relative; z-index: 1; }
 .pp__lmName {
   grid-area: name;
   font-weight: 600;
@@ -148,6 +166,8 @@
   box-shadow: 0 0 0 2px rgba(200, 148, 0, 0.18);
   animation: lmGlow 1.6s ease-in-out infinite;
 }
+.pp__lm--canbuy .pp__lmBtn::before { opacity: .42; }
+.pp__lm--built .pp__lmBtn::before  { opacity: .55; }
 .pp__lm--canbuy .pp__lmDesc { color: #8a6d00; }
 .pp__lm--canbuy .pp__lmBtn:hover {
   transform: translateY(-1px);

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fde0d8"/><stop offset="100%" stop-color="#fff2ee"/>
+      </linearGradient></defs>
+      <rect width="200" height="120" fill="url(#bg)"/>
+  <rect x="0" y="92" width="200" height="28" fill="#c98671" opacity=".55"/>
+  <g opacity=".9">
+    <!-- 咖啡杯 -->
+    <ellipse cx="80" cy="70" rx="28" ry="8" fill="#fff" stroke="#7a4a2a"/>
+    <path d="M52,70 q0,30 28,30 q28,0 28,-30" fill="#fff" stroke="#7a4a2a" stroke-width="1.5"/>
+    <ellipse cx="80" cy="70" rx="22" ry="6" fill="#7a4a2a"/>
+    <path d="M108,76 q14,0 14,12 q0,12 -14,10" fill="none" stroke="#7a4a2a" stroke-width="2"/>
+    <!-- 蒸汽 -->
+    <path d="M68,40 q4,-8 0,-16 M80,40 q4,-8 0,-16 M92,40 q4,-8 0,-16" fill="none" stroke="#aaa" stroke-width="1.2" opacity=".7"/>
+  </g>
+</svg>

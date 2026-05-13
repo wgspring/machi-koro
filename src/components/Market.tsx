@@ -1,6 +1,7 @@
 import { useGame } from '../state/GameContext';
 import { BUILDINGS, type CardColor } from '../data/cards';
 import { getBuildingIcon } from '../data/cardIcons';
+import { getBuildingArt } from '../data/cardArt';
 import './Market.css';
 
 const COLOR_CLASS: Record<CardColor, string> = {
@@ -59,13 +60,16 @@ export default function Market() {
         disabled={!enabled}
         onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
         title={b.description}
+        style={{ ['--card-art' as string]: `url("${getBuildingArt(b.id)}")` }}
       >
-        <div className="card__act">{fmtAct(b.activation)}</div>
-        <div className="card__head">
-          <span className="card__icon" aria-hidden>{getBuildingIcon(b.id)}</span>
-          <span className="card__title">{b.name}</span>
+        <div className="card__top">
+          <div className="card__head">
+            <span className="card__icon" aria-hidden>{getBuildingIcon(b.id)}</span>
+            <span className="card__title">{b.name}</span>
+            <span className="card__act">{fmtAct(b.activation)}</span>
+          </div>
+          <div className="card__desc">{b.description}</div>
         </div>
-        <div className="card__desc">{b.description}</div>
         <div className="card__bottom">
           <span className="card__cost">{b.cost} 币</span>
           <span className="card__supply">剩 {left}</span>

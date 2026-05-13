@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#dff5e6"/><stop offset="100%" stop-color="#f0faf3"/>
+      </linearGradient></defs>
+      <rect width="200" height="120" fill="url(#bg)"/>
+  <rect x="0" y="92" width="200" height="28" fill="#cfd5e0" opacity=".55"/>
+  <g opacity=".85">
+    <!-- 顶棚 -->
+    <rect x="20" y="40" width="160" height="12" fill="#e85b4a"/>
+    <line x1="40" y1="52" x2="40" y2="36" stroke="#7a4a2a"/>
+    <line x1="100" y1="52" x2="100" y2="36" stroke="#7a4a2a"/>
+    <line x1="160" y1="52" x2="160" y2="36" stroke="#7a4a2a"/>
+    <!-- 摊位 -->
+    <rect x="30" y="72" width="140" height="22" fill="#f4d4a3"/>
+    <!-- 苹果/番茄/橙 -->
+    <circle cx="55" cy="68" r="6" fill="#e85b4a"/>
+    <circle cx="75" cy="68" r="6" fill="#ffb84a"/>
+    <circle cx="95" cy="68" r="6" fill="#5e8b56"/>
+    <circle cx="115" cy="68" r="6" fill="#e85b4a"/>
+    <circle cx="135" cy="68" r="6" fill="#ffd24a"/>
+    <circle cx="155" cy="68" r="6" fill="#7a4a8a"/>
+  </g>
+</svg>

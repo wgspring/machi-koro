@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fff5d2"/><stop offset="100%" stop-color="#fffbed"/>
+      </linearGradient></defs>
+      <rect width="200" height="120" fill="url(#bg)"/>
+  <rect x="0" y="100" width="200" height="20" fill="#aaa" opacity=".55"/>
+  <g opacity=".9" stroke="#5e3fab" stroke-width="2" fill="none">
+    <line x1="80" y1="100" x2="100" y2="20"/>
+    <line x1="120" y1="100" x2="100" y2="20"/>
+    <line x1="86" y1="76" x2="114" y2="76"/>
+    <line x1="90" y1="60" x2="110" y2="60"/>
+    <line x1="94" y1="44" x2="106" y2="44"/>
+  </g>
+  <circle cx="100" cy="20" r="4" fill="#e85b4a"/>
+  <!-- 电波 -->
+  <g fill="none" stroke="#5e3fab" stroke-width="1.5" opacity=".7">
+    <path d="M70,30 q-10,10 0,20"/>
+    <path d="M62,22 q-18,18 0,36"/>
+    <path d="M130,30 q10,10 0,20"/>
+    <path d="M138,22 q18,18 0,36"/>
+  </g>
+</svg>

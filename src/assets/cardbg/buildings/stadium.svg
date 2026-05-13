@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#e8dcfb"/><stop offset="100%" stop-color="#f3edff"/>
+      </linearGradient></defs>
+      <rect width="200" height="120" fill="url(#bg)"/>
+  <ellipse cx="100" cy="100" rx="90" ry="20" fill="#5e8b56" opacity=".6"/>
+  <ellipse cx="100" cy="98" rx="80" ry="14" fill="#7aa84a" opacity=".7"/>
+  <g opacity=".9">
+    <!-- 看台 -->
+    <path d="M20,80 Q100,40 180,80" fill="#7c5dc8"/>
+    <path d="M20,80 Q100,50 180,80" fill="#9a82d8"/>
+    <!-- 灯柱 -->
+    <line x1="40" y1="50" x2="40" y2="20" stroke="#666" stroke-width="2"/>
+    <rect x="34" y="14" width="14" height="8" fill="#fff5d2"/>
+    <line x1="160" y1="50" x2="160" y2="20" stroke="#666" stroke-width="2"/>
+    <rect x="154" y="14" width="14" height="8" fill="#fff5d2"/>
+  </g>
+</svg>
