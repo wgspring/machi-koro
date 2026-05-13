@@ -1,6 +1,7 @@
 import { useGame } from '../state/GameContext';
 import { CATALOG } from '../data/engine';
 import { LANDMARKS } from '../data/cards';
+import { getBuildingIcon, getLandmarkIcon } from '../data/cardIcons';
 import type { PlayerState } from '../data/types';
 import './PlayerPanel.css';
 
@@ -27,6 +28,7 @@ function BuildingList({ player }: { player: PlayerState }) {
               ? card.activation[0]
               : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
           </span>
+          <span className="pp__icon" aria-hidden>{getBuildingIcon(id)}</span>
           <span className="pp__name">{card.name}</span>
           {card.color !== 'purple' && <span className="pp__count">×{n}</span>}
         </li>
@@ -60,6 +62,7 @@ function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boole
               title={lm.description}
             >
               <span className="pp__lmName">
+                <span className="pp__lmIcon" aria-hidden>{getLandmarkIcon(lm.id)}</span>
                 {lm.name}
                 {canBuy && <span className="pp__lmHint">点击建造</span>}
               </span>

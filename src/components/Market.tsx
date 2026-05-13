@@ -1,5 +1,6 @@
 import { useGame } from '../state/GameContext';
 import { BUILDINGS, type CardColor } from '../data/cards';
+import { getBuildingIcon } from '../data/cardIcons';
 import './Market.css';
 
 const COLOR_CLASS: Record<CardColor, string> = {
@@ -60,7 +61,10 @@ export default function Market() {
         title={b.description}
       >
         <div className="card__act">{fmtAct(b.activation)}</div>
-        <div className="card__title">{b.name}</div>
+        <div className="card__head">
+          <span className="card__icon" aria-hidden>{getBuildingIcon(b.id)}</span>
+          <span className="card__title">{b.name}</span>
+        </div>
         <div className="card__desc">{b.description}</div>
         <div className="card__bottom">
           <span className="card__cost">{b.cost} 币</span>

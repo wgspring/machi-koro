@@ -89,7 +89,27 @@
   font-weight: 700;
   color: #555;
 }
-.card__title { font-weight: 700; font-size: .88rem; margin-bottom: 2px; padding-right: 28px; }
+.card__title { font-weight: 700; font-size: .88rem; }
+.card__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  padding-right: 28px;       /* 给右上角的点数徽标留位置 */
+}
+.card__icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  background: var(--card-icon-bg, #eef2f7);
+  border: 1px solid var(--card-icon-bd, #d8dde6);
+}
 .card__desc { font-size: .72rem; color: #555; line-height: 1.25; min-height: 28px; }
 .card__bottom {
   display: flex;
@@ -100,10 +120,10 @@
 .card__cost { font-weight: 700; color: #c89400; }
 .card__supply { color: #888; }
 
-.card--blue   { border-top: 5px solid #3b82f6; }
-.card--green  { border-top: 5px solid #22a06b; }
-.card--red    { border-top: 5px solid #d64545; }
-.card--purple { border-top: 5px solid #8557d6; }
+.card--blue   { border-top: 5px solid #3b82f6; --card-icon-bg: #e6efff; --card-icon-bd: #b9d2ff; }
+.card--green  { border-top: 5px solid #22a06b; --card-icon-bg: #e3f6ed; --card-icon-bd: #a8dec5; }
+.card--red    { border-top: 5px solid #d64545; --card-icon-bg: #fde6e6; --card-icon-bd: #f0b3b3; }
+.card--purple { border-top: 5px solid #8557d6; --card-icon-bg: #efe6fb; --card-icon-bd: #c7adea; }
 
 @media (prefers-color-scheme: dark) {
   .market { background: #1c2028; border-color: #353a45; }
@@ -112,4 +132,8 @@
   .card { background: #2a2f3a; border-color: #444b58; color: #eee; }
   .card__desc { color: #bbb; }
   .card__act { background: rgba(255,255,255,.1); color: #ddd; }
+  .card--blue   { --card-icon-bg: #1d3557; --card-icon-bd: #345e94; }
+  .card--green  { --card-icon-bg: #143a26; --card-icon-bd: #2d6948; }
+  .card--red    { --card-icon-bg: #3a1d1d; --card-icon-bd: #6b3535; }
+  .card--purple { --card-icon-bg: #2c1c44; --card-icon-bd: #523580; }
 }
