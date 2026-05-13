@@ -139,10 +139,10 @@
 .pp__lmDesc { grid-area: desc; font-size: .65rem; color: #aaa; line-height: 1.25; }
 .pp__lmHint {
   font-size: .62rem;
-  color: #c89400;
+  color: var(--p-strong);
   font-weight: 700;
-  background: #fff8e0;
-  border: 1px solid #f0d480;
+  background: var(--p-soft);
+  border: 1px solid color-mix(in srgb, var(--p-color) 50%, transparent);
   border-radius: 4px;
   padding: 0 5px;
   line-height: 1.4;
@@ -160,24 +160,24 @@
 .pp__lm--canbuy .pp__lmBtn {
   cursor: pointer;
   border-style: solid;
-  border-color: #c89400;
-  background: #fff8e0;
-  color: #8a6d00;
-  box-shadow: 0 0 0 2px rgba(200, 148, 0, 0.18);
+  border-color: var(--p-color);
+  background: var(--p-soft);
+  color: var(--p-strong);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-color) 25%, transparent);
   animation: lmGlow 1.6s ease-in-out infinite;
 }
 .pp__lm--canbuy .pp__lmBtn::before { opacity: .42; }
 .pp__lm--built .pp__lmBtn::before  { opacity: .55; }
-.pp__lm--canbuy .pp__lmDesc { color: #8a6d00; }
+.pp__lm--canbuy .pp__lmDesc { color: var(--p-strong); }
 .pp__lm--canbuy .pp__lmBtn:hover {
   transform: translateY(-1px);
-  background: #ffe9a8;
-  box-shadow: 0 4px 12px rgba(200, 148, 0, 0.35);
+  background: color-mix(in srgb, var(--p-color) 15%, var(--p-soft));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--p-color) 35%, transparent);
 }
 
 @keyframes lmGlow {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(200, 148, 0, 0.18); }
-  50%      { box-shadow: 0 0 0 5px rgba(200, 148, 0, 0.32); }
+  0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-color) 25%, transparent); }
+  50%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--p-color) 45%, transparent); }
 }
 
 /* ============ 建筑标签:可滚动区域 ============ */
@@ -239,12 +239,15 @@
   .pp__lmDesc { color: #888; }
   .pp__lm--built .pp__lmBtn { background: #143a26; border-color: #22a06b; color: #6fd9a3; }
   .pp__lm--built .pp__lmDesc { color: #6fd9a3; }
+  /* 可购买:沿用主题色,通过 color-mix 在深色背景下做暗化 */
   .pp__lm--canbuy .pp__lmBtn {
-    background: #3a2e10;
-    border-color: #c89400;
-    color: #ffe08a;
+    background: color-mix(in srgb, var(--p-color) 22%, #1c2028);
+    border-color: var(--p-color);
+    color: color-mix(in srgb, var(--p-color) 80%, #fff);
   }
-  .pp__lm--canbuy .pp__lmDesc { color: #ffd460; }
-  .pp__lm--canbuy .pp__lmBtn:hover { background: #4a3a14; }
+  .pp__lm--canbuy .pp__lmDesc { color: color-mix(in srgb, var(--p-color) 70%, #fff); }
+  .pp__lm--canbuy .pp__lmBtn:hover {
+    background: color-mix(in srgb, var(--p-color) 35%, #1c2028);
+  }
   .pp__section h4 { color: #aaa; }
 }

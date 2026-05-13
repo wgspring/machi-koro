@@ -36,7 +36,12 @@
   padding-right: 4px;
 }
 
-.market__row { margin-top: 8px; }
+.market__row {
+  margin-top: 8px;
+  max-width: 900px;       /* 单行最大宽度,超出则居中 */
+  margin-left: auto;      /* 居中 */
+  margin-right: auto;
+}
 .market__row:first-child { margin-top: 0; }
 
 /* 标题行:与卡片网格使用相同 5 列,允许标题按 span 跨列 */
@@ -95,13 +100,29 @@
 }
 /* 卡片内子元素位于背景层之上 */
 .card > * { position: relative; z-index: 1; }
+.card:disabled {
+  /* 不可购买:不再降低透明度,只去掉指针交互 */
+  cursor: not-allowed;
+}
+/* 可购买:玩家主题色描边光晕 + 呼吸,不修改卡片本身的边框颜色 */
+.card:not(:disabled) {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--p-color) 30%, transparent);
+  animation: cardGlow 1.6s ease-in-out infinite;
+}
 .card:not(:disabled):hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+  background: var(--p-soft);
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--p-color) 45%, transparent);
 }
-.card:disabled {
-  opacity: .42;
-  cursor: not-allowed;
+@keyframes cardGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-color) 25%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--p-color) 45%, transparent);
+  }
 }
 .card__act {
   background: rgba(0, 0, 0, .08);
