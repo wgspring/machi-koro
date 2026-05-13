@@ -1,0 +1,63 @@
+.dice {
+  background: #fff;
+  border: 2px solid #d8dde6;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.dice__display {
+  font-size: 2.6rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  color: #333;
+}
+.dice__face {
+  display: inline-block;
+  width: 56px;
+  height: 56px;
+  line-height: 56px;
+  text-align: center;
+  background: #f6f8fb;
+  border: 2px solid #cfd5e0;
+  border-radius: 10px;
+}
+.dice__sum { font-size: 1.2rem; font-weight: 700; color: #4f7cff; }
+.dice__double { color: #d64545; font-style: normal; font-weight: 700; margin-left: 4px; }
+.dice__re { color: #888; font-style: normal; font-size: .9rem; }
+.dice__placeholder { color: #aaa; font-size: 1rem; }
+.dice__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dice__actions button {
+  padding: 8px 18px;
+  font-size: .95rem;
+  border-radius: 8px;
+  border: 1px solid #c9cfd9;
+  background: #fff;
+  cursor: pointer;
+  transition: background .15s;
+}
+.dice__actions button:hover { background: #f0f3fa; }
+.dice__actions button.primary {
+  background: #4f7cff;
+  color: #fff;
+  border-color: #4f7cff;
+}
+.dice__actions button.primary:hover { background: #3a66e5; }
+.dice__hint { color: #888; font-size: .9rem; }
+
+@media (prefers-color-scheme: dark) {
+  .dice { background: #1c2028; border-color: #353a45; }
+  .dice__display { color: #eee; }
+  .dice__face { background: #2a2f3a; border-color: #3a3f4a; }
+  .dice__actions button { background: #2a2f3a; color: #eee; border-color: #444b58; }
+  .dice__actions button:hover { background: #353c4a; }
+}

@@ -1,0 +1,110 @@
+.pp {
+  border: 2px solid #d8dde6;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  transition: border-color .2s, box-shadow .2s;
+}
+.pp--active {
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.18);
+}
+.pp__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.pp__header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp__badge {
+  font-size: .7rem;
+  background: #4f7cff;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.pp__coins {
+  font-weight: 700;
+  color: #c89400;
+  font-size: 1.05rem;
+}
+.pp__section { margin-top: 8px; }
+.pp__section h4 {
+  margin: 8px 0 6px;
+  font-size: .85rem;
+  color: #888;
+  font-weight: 600;
+  letter-spacing: .5px;
+}
+.pp__landmarks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.pp__lm {
+  display: flex;
+  justify-content: space-between;
+  border: 1px dashed #c9cfd9;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: .85rem;
+  color: #888;
+}
+.pp__lm--built {
+  border-style: solid;
+  border-color: #22a06b;
+  background: #effaf3;
+  color: #1f7a4d;
+  font-weight: 600;
+}
+.pp__lmCost { font-size: .8rem; }
+
+.pp__buildings {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pp__buildings .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: .82rem;
+  color: #fff;
+}
+.tag--blue   { background: #3b82f6; }
+.tag--green  { background: #22a06b; }
+.tag--red    { background: #d64545; }
+.tag--purple { background: #8557d6; }
+.pp__act {
+  background: rgba(0,0,0,.2);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: .72rem;
+}
+.pp__count { font-weight: 700; }
+.pp__empty {
+  color: #aaa;
+  font-size: .85rem;
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pp { background: #1c2028; border-color: #353a45; }
+  .pp__lm { border-color: #444b58; color: #aaa; }
+  .pp__lm--built { background: #143a26; border-color: #22a06b; color: #6fd9a3; }
+  .pp__section h4 { color: #aaa; }
+}

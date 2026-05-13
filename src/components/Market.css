@@ -1,0 +1,100 @@
+.market {
+  background: #fff;
+  border: 2px solid #d8dde6;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.market__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.market__head h3 { margin: 0; }
+.market__skip {
+  padding: 6px 12px;
+  border: 1px solid #c9cfd9;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.market__skip:hover { background: #f0f3fa; }
+.market__group { margin-top: 14px; }
+.market__group h4 {
+  margin: 0 0 8px;
+  font-size: .9rem;
+  color: #888;
+  font-weight: 600;
+}
+.market__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.card {
+  position: relative;
+  border: 2px solid #d8dde6;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 10px 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .15s, border-color .15s;
+  font-family: inherit;
+  color: #2c2c2c;
+}
+.card:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.card:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.card__act {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: rgba(0,0,0,.08);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: #555;
+}
+.card__title { font-weight: 700; font-size: .98rem; margin-bottom: 4px; padding-right: 32px; }
+.card__desc { font-size: .8rem; color: #555; min-height: 32px; line-height: 1.3; }
+.card__bottom {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: .8rem;
+}
+.card__cost { font-weight: 700; color: #c89400; }
+.card__supply { color: #888; }
+
+/* 颜色顶条 */
+.card--blue   { border-top: 6px solid #3b82f6; }
+.card--green  { border-top: 6px solid #22a06b; }
+.card--red    { border-top: 6px solid #d64545; }
+.card--purple { border-top: 6px solid #8557d6; }
+
+.card--landmark {
+  border-top: 6px solid #c89400;
+  background: #fffaf0;
+}
+.card--built {
+  background: #effaf3;
+  border-color: #22a06b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .market { background: #1c2028; border-color: #353a45; }
+  .market__group h4 { color: #aaa; }
+  .market__skip { background: #2a2f3a; color: #eee; border-color: #444b58; }
+  .card { background: #2a2f3a; border-color: #444b58; color: #eee; }
+  .card__desc { color: #bbb; }
+  .card__act { background: rgba(255,255,255,.1); color: #ddd; }
+  .card--landmark { background: #3a3018; }
+  .card--built { background: #143a26; }
+}
