@@ -79,14 +79,6 @@ const pushLog = (s: GameState, playerId: 0 | 1, text: string): GameState => {
   return s;
 };
 
-/** 在玩家间转账,自动处理钱不够的情况;返回实际转账金额 */
-const transfer = (s: GameState, from: 0 | 1, to: 0 | 1, amount: number): number => {
-  const actual = Math.min(amount, s.players[from].coins);
-  s.players[from].coins -= actual;
-  s.players[to].coins += actual;
-  return actual;
-};
-
 /* -------------------------------------------------------------------------- */
 /*                                  掷骰子                                    */
 /* -------------------------------------------------------------------------- */
@@ -148,55 +140,88 @@ const CUP_BONUS_IDS = new Set(['bakery', 'convenience', 'cafe', 'restaurant']);
 const cupBonus = (p: PlayerState, id: string) =>
   p.landmarks.mall && CUP_BONUS_IDS.has(id) ? 1 : 0;
 
-/**
- * 应用所有收益
- * 顺序:红色 → 蓝色/绿色 → 紫色
- */
-export function resolveIncome(state: GameState): GameState {
-  if (state.phase !== 'resolve' || !state.lastRoll) return state;
-  const s = cloneState(state);
-  const sum = s.lastRoll!.sum;
-  const active = s.active;
-  const opponent: 0 | 1 = active === 0 ? 1 : 0;
+/** 一条收益明细 */
+export interface IncomeItem {
+  cardName: string;
+  count: number;
+  /** 对该玩家的金币变化(可正可负) */
+  delta: number;
+  category: 'red' | 'blue' | 'green' | 'purple-coin' | 'purple-trade';
+}
 
-  // ============ 1. 红色:别人的餐饮业从主动玩家身上抢钱 ============
-  // 仅"非主动玩家"的红色建筑会触发
+/** 单次结算对两位玩家的全部影响(纯计算,不修改 state) */
+export interface IncomeBreakdown {
+  /** 玩家 0 / 1 的明细 */
+  items: [IncomeItem[], IncomeItem[]];
+  /** 玩家 0 / 1 的金币净变化 */
+  delta: [number, number];
+  /** 紫色商业中心交换的卡牌(若发生) */
+  trade?: { giveId: string; takeId: string };
+  /** 是否触发游乐园额外回合 */
+  extraTurn: boolean;
+}
+
+/**
+ * 纯计算函数:基于当前 state.lastRoll,推导出本次结算对双方的影响
+ * 用于"预览"和"实际结算"共用同一份逻辑
+ */
+export function computeIncomeBreakdown(state: GameState): IncomeBreakdown {
+  const empty: IncomeBreakdown = { items: [[], []], delta: [0, 0], extraTurn: false };
+  if (!state.lastRoll) return empty;
+
+  const sum = state.lastRoll.sum;
+  const active = state.active;
+  const opponent: 0 | 1 = active === 0 ? 1 : 0;
+  const players = state.players;
+
+  // 模拟金币池(用于红/紫色"钱不够时给到 0 为止"判定)
+  const coins: [number, number] = [players[0].coins, players[1].coins];
+  const items: [IncomeItem[], IncomeItem[]] = [[], []];
+
+  const tryTransfer = (from: 0 | 1, to: 0 | 1, amount: number) => {
+    const actual = Math.min(amount, coins[from]);
+    coins[from] -= actual;
+    coins[to] += actual;
+    return actual;
+  };
+
+  // 1. 红色:对手的红色建筑从主动玩家身上抢钱
   for (const card of BUILDINGS) {
     if (card.color !== 'red' || !card.activation.includes(sum)) continue;
     const owner = opponent;
-    const cnt = countOf(s.players[owner], card.id);
+    const cnt = countOf(players[owner], card.id);
     if (cnt === 0) continue;
     const per = card.id === 'cafe' ? 1 : 2;
-    const total = (per + cupBonus(s.players[owner], card.id)) * cnt;
-    const got = transfer(s, active, owner, total);
+    const total = (per + cupBonus(players[owner], card.id)) * cnt;
+    const got = tryTransfer(active, owner, total);
     if (got > 0) {
-      pushLog(s, owner, `${card.name} ×${cnt} 从对手身上获得 ${got} 币`);
+      items[owner].push({ cardName: card.name, count: cnt, delta: got, category: 'red' });
+      items[active].push({ cardName: `被「${card.name}」抢走`, count: cnt, delta: -got, category: 'red' });
     }
   }
 
-  // ============ 2. 蓝色:任何人触发,所有人收钱 ============
+  // 2. 蓝色:任何人触发,所有人收钱
   for (const pid of [0, 1] as const) {
     for (const card of BUILDINGS) {
       if (card.color !== 'blue' || !card.activation.includes(sum)) continue;
-      const cnt = countOf(s.players[pid], card.id);
+      const cnt = countOf(players[pid], card.id);
       if (cnt === 0) continue;
       let per = 0;
       if (card.id === 'wheat_field' || card.id === 'ranch' || card.id === 'forest') per = 1;
       else if (card.id === 'mine') per = 5;
       else if (card.id === 'apple_orchard') per = 3;
       const gain = per * cnt;
-      s.players[pid].coins += gain;
-      pushLog(s, pid, `${card.name} ×${cnt} 从银行获得 ${gain} 币`);
+      coins[pid] += gain;
+      items[pid].push({ cardName: card.name, count: cnt, delta: gain, category: 'blue' });
     }
   }
 
-  // ============ 3. 绿色:仅主动玩家触发 ============
+  // 3. 绿色:仅主动玩家触发
   for (const card of BUILDINGS) {
     if (card.color !== 'green' || !card.activation.includes(sum)) continue;
-    const me = s.players[active];
+    const me = players[active];
     const cnt = countOf(me, card.id);
     if (cnt === 0) continue;
-    /** 每张本卡的基础收益 */
     let perCardBase = 0;
     if (card.id === 'bakery') perCardBase = 1;
     else if (card.id === 'convenience') perCardBase = 3;
@@ -206,48 +231,113 @@ export function resolveIncome(state: GameState): GameState {
     const perCard = perCardBase + cupBonus(me, card.id);
     const gain = perCard * cnt;
     if (gain > 0) {
-      me.coins += gain;
-      pushLog(s, active, `${card.name} ×${cnt} 从银行获得 ${gain} 币`);
+      coins[active] += gain;
+      items[active].push({ cardName: card.name, count: cnt, delta: gain, category: 'green' });
     }
   }
 
-  // ============ 4. 紫色:仅主动玩家触发 ============
+  // 4. 紫色:仅主动玩家触发
+  let trade: IncomeBreakdown['trade'];
   for (const card of BUILDINGS) {
     if (card.color !== 'purple' || !card.activation.includes(sum)) continue;
-    const me = s.players[active];
+    const me = players[active];
     const cnt = countOf(me, card.id);
     if (cnt === 0) continue;
 
     if (card.id === 'stadium') {
-      const got = transfer(s, opponent, active, 2);
-      if (got > 0) pushLog(s, active, `体育馆:从对手获得 ${got} 币`);
+      const got = tryTransfer(opponent, active, 2);
+      if (got > 0) {
+        items[active].push({ cardName: '体育馆', count: 1, delta: got, category: 'purple-coin' });
+        items[opponent].push({ cardName: '被体育馆抢', count: 1, delta: -got, category: 'purple-coin' });
+      }
     } else if (card.id === 'tv_station') {
-      const got = transfer(s, opponent, active, 5);
-      if (got > 0) pushLog(s, active, `电视台:从对手获得 ${got} 币`);
+      const got = tryTransfer(opponent, active, 5);
+      if (got > 0) {
+        items[active].push({ cardName: '电视台', count: 1, delta: got, category: 'purple-coin' });
+        items[opponent].push({ cardName: '被电视台抢', count: 1, delta: -got, category: 'purple-coin' });
+      }
     } else if (card.id === 'business_ctr') {
-      // 双人简化:自动选择"对手最贵的非紫色建筑 ⇄ 自己最便宜的非紫色建筑"
       const myCards = Object.entries(me.buildings)
         .filter(([id, n]) => n > 0 && CATALOG.byId[id].color !== 'purple');
-      const oppCards = Object.entries(s.players[opponent].buildings)
+      const oppCards = Object.entries(players[opponent].buildings)
         .filter(([id, n]) => n > 0 && CATALOG.byId[id].color !== 'purple');
       if (myCards.length && oppCards.length) {
         const give = myCards.sort((a, b) => CATALOG.byId[a[0]].cost - CATALOG.byId[b[0]].cost)[0][0];
         const take = oppCards.sort((a, b) => CATALOG.byId[b[0]].cost - CATALOG.byId[a[0]].cost)[0][0];
-        me.buildings[give] = (me.buildings[give] ?? 0) - 1;
-        me.buildings[take] = (me.buildings[take] ?? 0) + 1;
-        s.players[opponent].buildings[take] = (s.players[opponent].buildings[take] ?? 0) - 1;
-        s.players[opponent].buildings[give] = (s.players[opponent].buildings[give] ?? 0) + 1;
-        pushLog(
-          s,
-          active,
-          `商业中心:用「${CATALOG.byId[give].name}」交换对手的「${CATALOG.byId[take].name}」`,
-        );
+        trade = { giveId: give, takeId: take };
+        items[active].push({
+          cardName: `商业中心:换得「${CATALOG.byId[take].name}」`,
+          count: 1,
+          delta: 0,
+          category: 'purple-trade',
+        });
+        items[opponent].push({
+          cardName: `被换走「${CATALOG.byId[take].name}」`,
+          count: 1,
+          delta: 0,
+          category: 'purple-trade',
+        });
       }
     }
   }
 
-  // 游乐园:豹子获得额外回合(在切换玩家时使用)
-  if (s.lastRoll!.isDouble && s.players[active].landmarks.amusement) {
+  const extraTurn =
+    !!state.lastRoll.isDouble && !!players[active].landmarks.amusement;
+
+  return {
+    items,
+    delta: [coins[0] - players[0].coins, coins[1] - players[1].coins],
+    trade,
+    extraTurn,
+  };
+}
+
+/** 仅在 resolve 阶段提供预览;其他阶段返回空 */
+export function previewIncome(state: GameState): IncomeBreakdown | null {
+  if (state.phase !== 'resolve' || !state.lastRoll) return null;
+  return computeIncomeBreakdown(state);
+}
+
+/**
+ * 应用所有收益(基于 computeIncomeBreakdown 的结果)
+ */
+export function resolveIncome(state: GameState): GameState {
+  if (state.phase !== 'resolve' || !state.lastRoll) return state;
+  const breakdown = computeIncomeBreakdown(state);
+  const s = cloneState(state);
+  const active = s.active;
+  const opponent: 0 | 1 = active === 0 ? 1 : 0;
+
+  // 应用金币变化
+  s.players[0].coins += breakdown.delta[0];
+  s.players[1].coins += breakdown.delta[1];
+
+  // 写日志(从明细生成)
+  for (const pid of [0, 1] as const) {
+    for (const item of breakdown.items[pid]) {
+      if (item.category === 'purple-trade' || item.delta !== 0) {
+        const sign = item.delta > 0 ? `+${item.delta}` : item.delta < 0 ? `${item.delta}` : '';
+        const text = item.delta === 0
+          ? item.cardName
+          : `${item.cardName} ×${item.count} ${sign} 币`;
+        pushLog(s, pid, text);
+      }
+    }
+  }
+
+  // 应用商业中心的卡牌交换
+  if (breakdown.trade) {
+    const { giveId, takeId } = breakdown.trade;
+    const me = s.players[active];
+    const opp = s.players[opponent];
+    me.buildings[giveId] = (me.buildings[giveId] ?? 0) - 1;
+    me.buildings[takeId] = (me.buildings[takeId] ?? 0) + 1;
+    opp.buildings[takeId] = (opp.buildings[takeId] ?? 0) - 1;
+    opp.buildings[giveId] = (opp.buildings[giveId] ?? 0) + 1;
+  }
+
+  // 游乐园额外回合
+  if (breakdown.extraTurn) {
     s.extraTurnPending = true;
     pushLog(s, active, '游乐园:豹子触发,本回合结束后再行动一次');
   }

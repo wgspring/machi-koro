@@ -22,7 +22,11 @@ function BuildingList({ player }: { player: PlayerState }) {
     <ul className="pp__buildings">
       {owned.map(({ id, n, card }) => (
         <li key={id} className={COLOR_CLASS[card.color]}>
-          <span className="pp__act">{card.activation.length === 1 ? card.activation[0] : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}</span>
+          <span className="pp__act">
+            {card.activation.length === 1
+              ? card.activation[0]
+              : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
+          </span>
           <span className="pp__name">{card.name}</span>
           <span className="pp__count">×{n}</span>
         </li>
@@ -31,15 +35,37 @@ function BuildingList({ player }: { player: PlayerState }) {
   );
 }
 
-function LandmarkList({ player }: { player: PlayerState }) {
+function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boolean }) {
+  const { state, dispatch } = useGame();
+  const buildPhase = state.phase === 'build';
   return (
     <ul className="pp__landmarks">
       {LANDMARKS.map((lm) => {
         const built = player.landmarks[lm.id];
+        const canBuy = isOwner && buildPhase && !built && player.coins >= lm.cost;
+        const cls = [
+          'pp__lm',
+          built && 'pp__lm--built',
+          canBuy && 'pp__lm--canbuy',
+        ]
+          .filter(Boolean)
+          .join(' ');
         return (
-          <li key={lm.id} className={`pp__lm ${built ? 'pp__lm--built' : ''}`}>
-            <span className="pp__lmName">{lm.name}</span>
-            <span className="pp__lmCost">{built ? '✓' : `${lm.cost}币`}</span>
+          <li key={lm.id} className={cls}>
+            <button
+              type="button"
+              className="pp__lmBtn"
+              disabled={!canBuy}
+              onClick={() => dispatch({ type: 'BUY_LANDMARK', landmarkId: lm.id })}
+              title={lm.description}
+            >
+              <span className="pp__lmName">{lm.name}</span>
+              <span className="pp__lmCost">
+                {built ? '✓ 已建成' : `${lm.cost} 币`}
+              </span>
+              <span className="pp__lmDesc">{lm.description}</span>
+              {canBuy && <span className="pp__lmHint">点击建造</span>}
+            </button>
           </li>
         );
       })}
@@ -63,7 +89,7 @@ export default function PlayerPanel({ playerId }: { playerId: 0 | 1 }) {
       </header>
       <section className="pp__section">
         <h4>地标</h4>
-        <LandmarkList player={player} />
+        <LandmarkList player={player} isOwner={isActive} />
       </section>
       <section className="pp__section">
         <h4>建筑</h4>
