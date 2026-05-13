@@ -18,6 +18,13 @@
   box-sizing: border-box;
 }
 .market__head h3 { margin: 0; font-size: 1rem; }
+.market__deckMeta {
+  font-size: .72rem;
+  color: #888;
+  font-weight: 500;
+  margin-left: 8px;
+  flex: 1;
+}
 .market__skip {
   padding: 4px 10px;
   font-size: .82rem;
@@ -48,6 +55,12 @@
   margin-right: auto;
 }
 .market__row:first-child { margin-top: 0; }
+/* harbor 模式:外层 grid 也用相同宽度 */
+.market__grid {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
 /* 标题行:与卡片网格使用相同 5 列,允许标题按 span 跨列 */
 .market__titles {
@@ -201,4 +214,93 @@
   .card--green  { --card-icon-bg: #143a26; --card-icon-bd: #2d6948; }
   .card--red    { --card-icon-bg: #3a1d1d; --card-icon-bd: #6b3535; }
   .card--purple { --card-icon-bg: #2c1c44; --card-icon-bd: #523580; }
+}
+
+/* ===== 港口扩展模式:8 列时卡片更紧凑 ===== */
+.card--needHarbor {
+  outline: 1px dashed #b07b00;
+  outline-offset: -2px;
+}
+.card__needHarbor {
+  font-size: .68rem;
+  color: #b07b00;
+  background: #fff5e0;
+  border: 1px solid #ffd99c;
+  border-radius: 4px;
+  padding: 1px 4px;
+  align-self: flex-start;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+@media (prefers-color-scheme: dark) {
+  .card__needHarbor { color: #ffd071; background: #3a2e10; border-color: #6c5618; }
+}
+
+/* ===== Bright Lights 合订版:10 种统一市场(5 列 × 2 行) ===== */
+/* harbor 模式:卡片更高,网格上方留空 */
+.market__grid--harbor {
+  margin-top: 80px;
+}
+.market__grid--harbor .card {
+  height: 200px;
+}
+/* 基础版:卡片紧凑一些 */
+.market__grid--base .card {
+  height: 160px;
+}
+.card--empty {
+  border: 2px dashed #cdd3dd;
+  background: #f6f7fa;
+  cursor: default;
+  opacity: .55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.card--empty .card__placeholder {
+  color: #999;
+  font-size: .82rem;
+}
+@media (prefers-color-scheme: dark) {
+  .card--empty { background: #232732; border-color: #3d434f; }
+  .card--empty .card__placeholder { color: #777; }
+}
+
+
+/* ===== 卡片底部标签行(港扩 / 需港口 等) ===== */
+.card__tags {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+/* 标签容器内的子标签去掉外边距,统一由 gap 控制 */
+.card__tags > .card__needHarbor,
+.card__tags > .card__modeBadge {
+  margin-top: 0;
+}
+
+/* 港扩标签(内联,弱化样式 — 与玩家面板地标 ::after 风格一致) */
+.card__modeBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: .68rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #fff5e0;
+  color: #b07b00;
+  border: 1px solid #ffd99c;
+  line-height: 1.3;
+}
+@media (prefers-color-scheme: dark) {
+  .card__modeBadge {
+    background: #3a2e10;
+    color: #ffd071;
+    border-color: #6c5618;
+  }
 }

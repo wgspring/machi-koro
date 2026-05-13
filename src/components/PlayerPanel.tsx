@@ -1,8 +1,9 @@
 import { useGame } from '../state/GameContext';
 import { CATALOG } from '../data/engine';
-import { LANDMARKS } from '../data/cards';
-import { getBuildingIcon, getLandmarkIcon } from '../data/cardIcons';
+import { getLandmarks } from '../data/cards';
+import { getLandmarkIcon } from '../data/cardIcons';
 import { getLandmarkArt } from '../data/cardArt';
+import { SYMBOL_META } from '../data/symbols';
 import type { PlayerState } from '../data/types';
 import './PlayerPanel.css';
 
@@ -17,6 +18,7 @@ function BuildingList({ player }: { player: PlayerState }) {
   const owned = Object.entries(player.buildings)
     .filter(([, n]) => n > 0)
     .map(([id, n]) => ({ id, n, card: CATALOG.byId[id] }))
+    .filter((x) => x.card) // 防御:跨模式下未识别卡牌
     .sort((a, b) => a.card.activation[0] - b.card.activation[0]);
 
   if (!owned.length) return <div className="pp__empty">暂无建筑</div>;
@@ -29,9 +31,15 @@ function BuildingList({ player }: { player: PlayerState }) {
               ? card.activation[0]
               : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
           </span>
-          <span className="pp__icon" aria-hidden>{getBuildingIcon(id)}</span>
+          <span
+            className="pp__icon"
+            aria-label={SYMBOL_META[card.symbol].label}
+            title={SYMBOL_META[card.symbol].label}
+          >
+            {SYMBOL_META[card.symbol].emoji}
+          </span>
           <span className="pp__name">{card.name}</span>
-          {card.color !== 'purple' && <span className="pp__count">×{n}</span>}
+          {card.color !== 'purple' && n > 1 && <span className="pp__count">×{n}</span>}
         </li>
       ))}
     </ul>
@@ -41,18 +49,32 @@ function BuildingList({ player }: { player: PlayerState }) {
 function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boolean }) {
   const { state, dispatch } = useGame();
   const buildPhase = state.phase === 'build';
+  const landmarks = getLandmarks(state.mode);
+  // 把"默认建成的"地标排在最前(始终显示为已建成,不可点击)
+  const sorted = [...landmarks].sort((a, b) => {
+    const av = a.builtByDefault ? 0 : 1;
+    const bv = b.builtByDefault ? 0 : 1;
+    if (av !== bv) return av - bv;
+    return a.cost - b.cost;
+  });
   return (
     <ul className="pp__landmarks">
-      {LANDMARKS.map((lm) => {
+      {sorted.map((lm) => {
         const built = player.landmarks[lm.id];
-        const canBuy = isOwner && buildPhase && !built && player.coins >= lm.cost;
+        const canBuy =
+          isOwner && buildPhase && !built && !lm.builtByDefault && player.coins >= lm.cost;
         const cls = [
           'pp__lm',
           built && 'pp__lm--built',
           canBuy && 'pp__lm--canbuy',
+          lm.mode === 'harbor' && 'pp__lm--harbor',
+          lm.builtByDefault && 'pp__lm--default',
         ]
           .filter(Boolean)
           .join(' ');
+        const art = getLandmarkArt(lm.id);
+        const showCost = !lm.builtByDefault;
+        const costLabel = built ? '✓ 已建成' : `${lm.cost} 币`;
         return (
           <li key={lm.id} className={cls}>
             <button
@@ -61,16 +83,14 @@ function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boole
               disabled={!canBuy}
               onClick={() => dispatch({ type: 'BUY_LANDMARK', landmarkId: lm.id })}
               title={lm.description}
-              style={{ ['--lm-art' as string]: `url("${getLandmarkArt(lm.id)}")` }}
+              style={art ? { ['--lm-art' as string]: `url("${art}")` } : undefined}
             >
               <span className="pp__lmName">
                 <span className="pp__lmIcon" aria-hidden>{getLandmarkIcon(lm.id)}</span>
                 {lm.name}
                 {canBuy && <span className="pp__lmHint">点击建造</span>}
               </span>
-              <span className="pp__lmCost">
-                {built ? '✓ 已建成' : `${lm.cost} 币`}
-              </span>
+              {showCost && <span className="pp__lmCost">{costLabel}</span>}
               <span className="pp__lmDesc">{lm.description}</span>
             </button>
           </li>

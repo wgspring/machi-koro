@@ -23,6 +23,22 @@ export const BUILDING_ICONS: Record<string, string> = {
   stadium:        '🏟️',
   tv_station:     '📺',
   business_ctr:   '🏢',
+
+  // ===== Bright Lights 合订版新增 =====
+  // 蓝色
+  flower_orch:    '🌷',
+  mackerel_boat:  '🎣',
+  tuna_boat:      '🐟',
+  // 绿色
+  flower_shop:    '💐',
+  food_warehouse: '📦',
+  // 红色
+  sushi_bar:      '🍣',
+  pizza_joint:    '🍕',
+  hamburger:      '🍔',
+  // 紫色
+  publisher:      '📰',
+  tax_office:     '🏛️',
 };
 
 export const LANDMARK_ICONS: Record<string, string> = {
@@ -30,6 +46,9 @@ export const LANDMARK_ICONS: Record<string, string> = {
   mall:        '🛍️',
   amusement:   '🎡',
   radio_tower: '📡',
+  // Bright Lights 默认建成
+  city_hall:   '🏛️',
+  harbor:      '⚓',
 };
 
 /** 兜底图标:未配置时返回一个通用积木 */

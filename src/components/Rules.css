@@ -125,3 +125,24 @@
   .rules code { background: #2a2f3a; }
   .rules__note { color: #aaa; }
 }
+
+.rules__tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 0.72rem;
+  border-radius: 6px;
+  background: #e8f0ff;
+  color: #2952c2;
+  border: 1px solid #c9daff;
+  letter-spacing: 1px;
+}
+.rules__tag--warn {
+  background: #fff5e0;
+  color: #b07b00;
+  border-color: #ffd99c;
+}
+@media (prefers-color-scheme: dark) {
+  .rules__tag { background: #1d2940; color: #9bb6ff; border-color: #2c4070; }
+  .rules__tag--warn { background: #3a2e10; color: #ffd071; border-color: #6c5618; }
+}

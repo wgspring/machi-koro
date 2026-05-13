@@ -1,9 +1,11 @@
 /**
  * 游戏核心类型定义
  */
-import type { BuildingCard, LandmarkCard } from './cards';
+import type { BuildingCard, LandmarkCard, GameMode } from './cards';
 
-export type Phase = 'roll' | 'resolve' | 'build' | 'gameover';
+export type Phase = 'roll' | 'pending-harbor' | 'resolve' | 'build' | 'gameover';
+
+export type { GameMode };
 
 export interface PlayerState {
   id: 0 | 1;
@@ -11,7 +13,7 @@ export interface PlayerState {
   coins: number;
   /** 已拥有的建筑:卡牌 id -> 数量 */
   buildings: Record<string, number>;
-  /** 已建成的地标 id 集合 */
+  /** 已建成的地标 id 集合(含默认建成的 city_hall / harbor) */
   landmarks: Record<string, boolean>;
 }
 
@@ -26,6 +28,8 @@ export interface DiceResult {
   isDouble: boolean;
   /** 是否本回合的"重投"结果 */
   rerolled: boolean;
+  /** 是否使用了港口 +2 加成 */
+  harborBoosted: boolean;
 }
 
 export interface LogEntry {
@@ -35,7 +39,19 @@ export interface LogEntry {
   text: string;
 }
 
+/**
+ * 10 种统一市场状态(仅 harbor 模式使用):
+ *  - deck     : 唯一牌库(按张计;每个 id 重复 supply 次,已洗牌)
+ *  - displayed: 当前场上"露出"的卡 id 集合(去重,最多 10 种)
+ */
+export interface MarketDecks {
+  deck: string[];
+  displayed: string[];
+}
+
 export interface GameState {
+  /** 游戏模式 */
+  mode: GameMode;
   turn: number;
   /** 当前操作玩家 id */
   active: 0 | 1;
@@ -43,11 +59,15 @@ export interface GameState {
   players: [PlayerState, PlayerState];
   /** 公共卡池剩余:卡牌 id -> 数量 */
   supply: Record<string, number>;
+  /** 10 堆市场(仅 harbor 模式;base 模式为 null) */
+  market: MarketDecks | null;
   lastRoll: DiceResult | null;
   /** 本回合是否已用过电波塔重投 */
   rerollUsedThisTurn: boolean;
   /** 本回合是否已通过游乐园获得额外行动 */
   extraTurnPending: boolean;
+  /** 本回合是否已建造 */
+  builtThisTurn: boolean;
   winner: 0 | 1 | null;
   log: LogEntry[];
   _logSeq: number;

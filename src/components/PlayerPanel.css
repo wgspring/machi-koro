@@ -251,3 +251,64 @@
   }
   .pp__section h4 { color: #aaa; }
 }
+
+
+/* 港口扩展地标:右上角小角标 */
+.pp__lm--harbor .pp__lmBtn::after {
+  content: '港扩';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: .58rem;
+  letter-spacing: 1px;
+  background: #fff5e0;
+  color: #b07b00;
+  border: 1px solid #ffd99c;
+  padding: 0 4px;
+  border-radius: 4px;
+  z-index: 2;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .pp__lm--harbor .pp__lmBtn::after {
+    background: #3a2e10;
+    color: #ffd071;
+    border-color: #6c5618;
+  }
+}
+
+
+/* ===== Bright Lights:默认建成地标(采用玩家主题色) ===== */
+.pp__lm--default .pp__lmBtn {
+  border: 1px solid color-mix(in srgb, var(--my-color) 55%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--my-color) 14%, white) 0%,
+    color-mix(in srgb, var(--my-color) 7%, white) 100%
+  );
+  color: var(--my-strong);
+  cursor: default;
+}
+.pp__lm--default .pp__lmName { color: var(--my-strong); }
+.pp__lm--default .pp__lmDesc {
+  color: color-mix(in srgb, var(--my-strong) 75%, #555);
+}
+@media (prefers-color-scheme: dark) {
+  .pp__lm--default .pp__lmBtn {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--my-color) 28%, #1c2028) 0%,
+      color-mix(in srgb, var(--my-color) 18%, #1c2028) 100%
+    );
+    border-color: color-mix(in srgb, var(--my-color) 65%, transparent);
+    color: color-mix(in srgb, var(--my-color) 35%, white);
+  }
+  .pp__lm--default .pp__lmName {
+    color: color-mix(in srgb, var(--my-color) 25%, white);
+  }
+  .pp__lm--default .pp__lmDesc {
+    color: color-mix(in srgb, var(--my-color) 45%, #d0d0d0);
+  }
+}
+
+

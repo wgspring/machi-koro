@@ -92,6 +92,7 @@ export default function DiceArea() {
                   = {lastRoll.sum}
                   {lastRoll.isDouble && <em className="dice__double"> (豹子)</em>}
                   {lastRoll.rerolled && <em className="dice__re"> (重投)</em>}
+                  {lastRoll.harborBoosted && <em className="dice__re"> (⚓+2)</em>}
                 </span>
               </>
             ) : (
@@ -110,6 +111,20 @@ export default function DiceArea() {
                     🎲🎲 投 2 颗
                   </button>
                 )}
+              </>
+            )}
+            {phase === 'pending-harbor' && (
+              <>
+                <span className="dice__hint">⚓ 港口:点数 ≥10,是否 +2?</span>
+                <button
+                  className="primary"
+                  onClick={() => dispatch({ type: 'HARBOR_BOOST', accept: true })}
+                >
+                  ⚓ +2(变 {(lastRoll?.sum ?? 0) + 2})
+                </button>
+                <button onClick={() => dispatch({ type: 'HARBOR_BOOST', accept: false })}>
+                  保持原点数
+                </button>
               </>
             )}
             {phase === 'resolve' && (

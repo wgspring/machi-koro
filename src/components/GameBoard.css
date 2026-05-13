@@ -45,6 +45,19 @@ body { overflow: hidden; }
   margin: 0;
   font-size: 1.15rem;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.board__modeBadge {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background: var(--p-soft);
+  color: var(--p-strong);
+  border: 1px solid color-mix(in srgb, var(--p-color) 35%, white);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 .board__topActions { display: flex; gap: 6px; }
 .board__topActions button {
