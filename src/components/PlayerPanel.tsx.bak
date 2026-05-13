@@ -91,7 +91,7 @@ export default function PlayerPanel({ playerId }: { playerId: 0 | 1 }) {
         <h4>地标</h4>
         <LandmarkList player={player} isOwner={isActive} />
       </section>
-      <section className="pp__section pp__section--scroll">
+      <section className="pp__section">
         <h4>建筑</h4>
         <BuildingList player={player} />
       </section>

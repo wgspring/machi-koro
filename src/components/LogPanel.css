@@ -1,34 +1,38 @@
 .logp {
   background: #fff;
   border: 2px solid #d8dde6;
-  border-radius: 12px;
-  padding: 12px 14px;
+  border-radius: 10px;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 260px;
+  min-height: 0;
 }
-.logp h3 { margin: 0 0 8px; font-size: 1rem; }
+.logp h3 {
+  margin: 0 0 4px;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
 .logp__list {
   flex: 1;
   overflow-y: auto;
-  font-size: .85rem;
+  font-size: .78rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 360px;
+  gap: 2px;
+  min-height: 0;
 }
 .logp__row {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: baseline;
-  padding: 3px 6px;
-  border-radius: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
 }
 .logp__row--p0 { background: #eef3ff; }
 .logp__row--p1 { background: #fff0e8; }
-.logp__turn { color: #888; font-size: .75rem; min-width: 28px; }
-.logp__who { font-weight: 600; min-width: 56px; color: #444; }
+.logp__turn { color: #888; font-size: .7rem; min-width: 24px; }
+.logp__who { font-weight: 600; min-width: 50px; color: #444; font-size: .76rem; }
 .logp__text { color: #333; }
 
 @media (prefers-color-scheme: dark) {

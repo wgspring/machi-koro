@@ -34,7 +34,7 @@ export default function Market() {
 
   return (
     <div className="market">
-      <div class="market__head">
+      <div className="market__head">
         <h3>卡池</h3>
         {buildPhase && (
           <button className="market__skip" onClick={() => dispatch({ type: 'SKIP_BUILD' })}>

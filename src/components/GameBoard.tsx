@@ -33,28 +33,33 @@ function GameBoardInner({ onShowRules }: { onShowRules: () => void }) {
     <div className="board">
       <header className="board__top">
         <h1>骰子街 · Machi Koro</h1>
+        <PhaseHint />
         <div className="board__topActions">
           <button onClick={onShowRules}>📖 规则</button>
           <button onClick={() => dispatch({ type: 'RESTART' })}>🔄 重开</button>
         </div>
       </header>
 
-      <PhaseHint />
+      <div className="board__body">
+        <aside className="board__side board__side--left">
+          <PlayerPanel playerId={0} />
+        </aside>
 
-      <div className="board__players">
-        <PlayerPanel playerId={0} />
-        <PlayerPanel playerId={1} />
-      </div>
+        <main className="board__center">
+          <div className="board__dice">
+            <DiceArea />
+          </div>
+          <div className="board__market">
+            <Market />
+          </div>
+          <div className="board__log">
+            <LogPanel />
+          </div>
+        </main>
 
-      <DiceArea />
-
-      <div className="board__main">
-        <div className="board__market">
-          <Market />
-        </div>
-        <div className="board__log">
-          <LogPanel />
-        </div>
+        <aside className="board__side board__side--right">
+          <PlayerPanel playerId={1} />
+        </aside>
       </div>
     </div>
   );

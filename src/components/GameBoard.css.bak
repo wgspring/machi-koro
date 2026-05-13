@@ -36,21 +36,22 @@ body { overflow: hidden; }
 }
 .board__topActions button:hover { background: #f0f3fa; }
 
-/* PhaseHint(放进顶栏中间,居中显示) */
+/* PhaseHint(放进顶栏中间) */
 .phase {
   background: #f6f8fb;
-  padding: 4px 14px;
+  border-left: 3px solid #4f7cff;
+  padding: 4px 10px;
   border-radius: 4px;
   font-size: .85rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
-  justify-self: center;
 }
 .phase--win {
   background: #fff8e0;
+  border-color: #c89400;
   font-weight: 700;
+  text-align: center;
 }
 
 /* ============ 主体三列 ============ */

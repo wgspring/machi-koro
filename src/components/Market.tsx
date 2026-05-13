@@ -43,34 +43,36 @@ export default function Market() {
         )}
       </div>
 
-      {COLOR_GROUPS.map(({ color, label }) => (
-        <section key={color} className="market__group">
-          <h4>{label}</h4>
-          <div className="market__grid">
-            {BUILDINGS.filter((b) => b.color === color).map((b) => {
-              const left = supply[b.id] ?? 0;
-              const enabled = canBuyBuilding(b.id);
-              return (
-                <button
-                  key={b.id}
-                  className={`card ${COLOR_CLASS[b.color]}`}
-                  disabled={!enabled}
-                  onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
-                  title={b.description}
-                >
-                  <div className="card__act">{fmtAct(b.activation)}</div>
-                  <div className="card__title">{b.name}</div>
-                  <div className="card__desc">{b.description}</div>
-                  <div className="card__bottom">
-                    <span className="card__cost">{b.cost} 币</span>
-                    <span className="card__supply">剩 {left}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+      <div className="market__scroll">
+        {COLOR_GROUPS.map(({ color, label }) => (
+          <section key={color} className="market__group">
+            <h4>{label}</h4>
+            <div className="market__grid">
+              {BUILDINGS.filter((b) => b.color === color).map((b) => {
+                const left = supply[b.id] ?? 0;
+                const enabled = canBuyBuilding(b.id);
+                return (
+                  <button
+                    key={b.id}
+                    className={`card ${COLOR_CLASS[b.color]}`}
+                    disabled={!enabled}
+                    onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
+                    title={b.description}
+                  >
+                    <div className="card__act">{fmtAct(b.activation)}</div>
+                    <div className="card__title">{b.name}</div>
+                    <div className="card__desc">{b.description}</div>
+                    <div className="card__bottom">
+                      <span className="card__cost">{b.cost} 币</span>
+                      <span className="card__supply">剩 {left}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }
