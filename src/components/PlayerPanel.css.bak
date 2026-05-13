@@ -3,34 +3,16 @@
   border-radius: 12px;
   padding: 10px 12px;
   background: #fff;
-  transition: border-color .2s, box-shadow .2s, background .2s;
+  transition: border-color .2s, box-shadow .2s;
   height: 100%;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-
-/* 各玩家专属主题色 */
-.pp--p0 {
-  --my-color:  #4f7cff;
-  --my-soft:   #eef3ff;
-  --my-strong: #3a66e5;
-}
-.pp--p1 {
-  --my-color:  #ff8a3d;
-  --my-soft:   #fff0e3;
-  --my-strong: #e57228;
-}
-
-/* 始终在面板顶部用自己的色做"色条",方便区分 */
-.pp { border-top-width: 6px; border-top-color: var(--my-color); }
-
 .pp--active {
-  border-color: var(--my-color);
-  background: var(--my-soft);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--my-color) 30%, transparent);
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.18);
 }
-
 .pp__header {
   display: flex;
   justify-content: space-between;
@@ -44,11 +26,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--my-strong);
 }
 .pp__badge {
   font-size: .65rem;
-  background: var(--my-color);
+  background: #4f7cff;
   color: #fff;
   padding: 1px 6px;
   border-radius: 999px;

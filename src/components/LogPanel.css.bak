@@ -37,8 +37,8 @@
 
 @media (prefers-color-scheme: dark) {
   .logp { background: #1c2028; border-color: #353a45; }
-  .logp__row--p0 { background: #1f2a44; border-left-color: #4f7cff; }
-  .logp__row--p1 { background: #3a2820; border-left-color: #ff8a3d; }
+  .logp__row--p0 { background: #1f2a44; }
+  .logp__row--p1 { background: #3a2820; }
   .logp__who { color: #ccc; }
   .logp__text { color: #ddd; }
 }

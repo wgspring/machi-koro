@@ -79,7 +79,7 @@ export default function PlayerPanel({ playerId }: { playerId: 0 | 1 }) {
   const isActive = state.active === playerId && state.phase !== 'gameover';
 
   return (
-    <div className={`pp ${isActive ? 'pp--active' : ''}`}>
+    <div className={`pp pp--p${playerId} ${isActive ? 'pp--active' : ''}`}>
       <header className="pp__header">
         <h3>
           {player.name}

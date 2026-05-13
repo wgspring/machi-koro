@@ -28,9 +28,9 @@ function PhaseHint() {
 }
 
 function GameBoardInner({ onShowRules }: { onShowRules: () => void }) {
-  const { state, dispatch } = useGame();
+  const { dispatch } = useGame();
   return (
-    <div className={`board board--p${state.active}`}>
+    <div className="board">
       <header className="board__top">
         <h1>骰子街 · Machi Koro</h1>
         <PhaseHint />

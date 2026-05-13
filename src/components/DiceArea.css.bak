@@ -46,15 +46,7 @@
 .dice__sum { font-size: 1rem; font-weight: 700; color: var(--p-color); }
 .dice__double { color: #d64545; font-style: normal; font-weight: 700; margin-left: 4px; font-size: .85rem; }
 .dice__re { color: #888; font-style: normal; font-size: .8rem; }
-.dice__placeholder {
-  color: var(--p-strong);
-  background: var(--p-soft);
-  font-size: .9rem;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  transition: background .25s, color .25s;
-}
+.dice__placeholder { color: #aaa; font-size: .9rem; }
 .dice__actions {
   display: flex;
   gap: 8px;

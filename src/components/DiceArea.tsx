@@ -95,7 +95,7 @@ export default function DiceArea() {
                 </span>
               </>
             ) : (
-              <span className="dice__placeholder">— 等待 {players[active].name} 投骰 —</span>
+              <span className="dice__placeholder">— 等待掷骰 —</span>
             )}
           </div>
 

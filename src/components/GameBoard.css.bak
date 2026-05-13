@@ -1,6 +1,16 @@
-/* ============ 全屏不滚动外壳 ============ */
+/* ============ 全屏不滚动外壳 + 玩家主题色 ============ */
 html, body, #root { height: 100%; }
 body { overflow: hidden; }
+
+/* 玩家主题色 CSS 变量(供子组件统一引用) */
+:root {
+  --p0-color: #4f7cff;       /* 玩家 1:蓝 */
+  --p0-soft:  #eef3ff;
+  --p0-strong:#3a66e5;
+  --p1-color: #ff8a3d;       /* 玩家 2:橙 */
+  --p1-soft:  #fff0e3;
+  --p1-strong:#e57228;
+}
 
 .board {
   height: 100vh;
@@ -9,6 +19,16 @@ body { overflow: hidden; }
   padding: 8px 12px 10px;
   gap: 8px;
   box-sizing: border-box;
+
+  /* 默认主题色 = 玩家 1 的色 */
+  --p-color:  var(--p0-color);
+  --p-soft:   var(--p0-soft);
+  --p-strong: var(--p0-strong);
+}
+.board--p1 {
+  --p-color:  var(--p1-color);
+  --p-soft:   var(--p1-soft);
+  --p-strong: var(--p1-strong);
 }
 
 /* ============ 顶栏 ============ */
@@ -17,8 +37,9 @@ body { overflow: hidden; }
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  border-bottom: 2px solid #e5e5e5;
+  border-bottom: 2px solid var(--p-color);
   padding-bottom: 6px;
+  transition: border-color .25s;
 }
 .board__top h1 {
   margin: 0;
@@ -36,22 +57,21 @@ body { overflow: hidden; }
 }
 .board__topActions button:hover { background: #f0f3fa; }
 
-/* PhaseHint(放进顶栏中间) */
+/* PhaseHint(放进顶栏中间,居中显示) */
 .phase {
   background: #f6f8fb;
-  border-left: 3px solid #4f7cff;
-  padding: 4px 10px;
+  padding: 4px 14px;
   border-radius: 4px;
   font-size: .85rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+  justify-self: center;
 }
 .phase--win {
   background: #fff8e0;
-  border-color: #c89400;
   font-weight: 700;
-  text-align: center;
 }
 
 /* ============ 主体三列 ============ */
