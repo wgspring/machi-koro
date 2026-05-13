@@ -99,7 +99,11 @@ body { overflow: hidden; }
   min-height: 0;
   min-width: 0;
 }
-.board__dice { min-height: 0; }
+.board__dice {
+  height: 130px;            /* 父布局统一控制高度 */
+  display: flex;            /* 让 .dice 撑满 */
+}
+.board__dice > * { width: 100%; }
 .board__market {
   min-height: 0;
   overflow: hidden; /* 内部 .market 会做 overflow-y:auto */
