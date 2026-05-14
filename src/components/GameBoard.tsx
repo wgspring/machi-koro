@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GameProvider, useGame } from '../state/GameContext';
 import PlayerPanel from './PlayerPanel';
 import DiceArea from './DiceArea';
 import Market from './Market';
 import LogPanel from './LogPanel';
 import Rules from './Rules';
+import Confetti from './Confetti';
+import WinModal from './WinModal';
 import type { GameMode } from '../data/types';
 import './GameBoard.css';
 
@@ -39,8 +41,19 @@ function GameBoardInner({
 }) {
   const { state, dispatch } = useGame();
   const modeLabel = state.mode === 'harbor' ? 'Bright Lights 合订版' : '基础版';
+
+  // 胜利弹窗:游戏结束时打开,用户点 ✕ / "关闭" 才停;新一局或返回首页时复位
+  const [winDismissed, setWinDismissed] = useState(false);
+  useEffect(() => {
+    // winner 从有变无(重开 / 切局)→ 复位
+    if (state.winner === null) setWinDismissed(false);
+  }, [state.winner]);
+
+  const winnerOpen = state.winner !== null && !winDismissed;
+
   return (
     <div className={`board board--p${state.active}`}>
+      <Confetti active={winnerOpen} winner={state.winner} />
       <header className="board__top">
         <h1>
           骰子街 · Machi Koro
@@ -75,6 +88,19 @@ function GameBoardInner({
           <PlayerPanel playerId={1} />
         </aside>
       </div>
+
+      {winnerOpen && state.winner !== null && (
+        <WinModal
+          winnerId={state.winner}
+          winnerName={state.players[state.winner].name}
+          turn={state.turn}
+          onRestart={() => {
+            setWinDismissed(false);
+            dispatch({ type: 'RESTART' });
+          }}
+          onClose={() => setWinDismissed(true)}
+        />
+      )}
     </div>
   );
 }

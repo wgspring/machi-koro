@@ -1,0 +1,14 @@
+/* 全屏礼花覆盖层 */
+.confetti {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;   /* 不挡按钮(包括下层胜利弹窗的按钮) */
+  z-index: 10001;         /* 必须 > .winModal(10000),让礼花覆盖在弹窗之上 */
+}
+
+/* 没有胜者时彻底隐藏(但元素保留在 DOM,避免 ref 时序问题) */
+.confetti--hidden {
+  display: none;
+}
