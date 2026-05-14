@@ -291,6 +291,15 @@ const cupLikeSymbolCount = (p: PlayerState): number => {
   return n;
 };
 
+/** Bright Lights 食品仓库规则:仅 ☕ cup 杯型建筑数量 */
+const cupSymbolCount = (p: PlayerState): number => {
+  let n = 0;
+  for (const [id, cnt] of Object.entries(p.buildings)) {
+    if (cnt > 0 && CATALOG.byId[id]?.symbol === 'cup') n += cnt;
+  }
+  return n;
+};
+
 /** 一条收益明细 */
 export interface IncomeItem {
   cardName: string;
@@ -423,7 +432,7 @@ export function computeIncomeBreakdown(state: GameState): IncomeBreakdown {
     else if (card.id === 'furniture') perCardBase = 3 * (countOf(me, 'forest') + countOf(me, 'mine'));
     else if (card.id === 'market') perCardBase = 2 * (countOf(me, 'wheat_field') + countOf(me, 'apple_orchard'));
     else if (card.id === 'flower_shop') perCardBase = 1 * countOf(me, 'flower_orch');
-    else if (card.id === 'food_warehouse') perCardBase = 2 * cupLikeSymbolCount(me);
+    else if (card.id === 'food_warehouse') perCardBase = 2 * cupSymbolCount(me);
     const perCard = perCardBase + cupBonus(me, card.id);
     const gain = perCard * cnt;
     if (gain > 0) {
