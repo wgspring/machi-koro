@@ -70,7 +70,8 @@ export function initMarket(mode: GameMode): MarketDecks | null {
   const shuffled = shuffle(deck);
   const displayed: string[] = [];
   refillMarket(shuffled, displayed);
-  return { deck: shuffled, displayed };
+  // 初始铺面不算"新补",避免开局每张都闪
+  return { deck: shuffled, displayed, freshIds: [], freshSetTurn: -1 };
 }
 
 /** 翻牌补足到 MARKET_DISPLAY_KINDS 种(去重展示);重复的卡牌默默叠到对应 supply */
@@ -88,14 +89,27 @@ function refillMarket(deck: string[], displayed: string[]): void {
 /**
  * 在市场上"买掉"一张卡:
  *  - 若 supply 已为 0,则从 displayed 移除该 id;
- *  - 然后从牌库顶部补到 10 种。
+ *  - 然后从牌库顶部补到 10 种;
+ *  - 把因补牌新增的 id 累加到 market.freshIds(用于 UI 闪光),已存在的不重复加入。
  * 该函数直接修改传入的 market 对象(已是 cloneState 后的副本)
  */
-function takeFromMarket(market: MarketDecks, supply: Record<string, number>, cardId: string): void {
+function takeFromMarket(market: MarketDecks, supply: Record<string, number>, cardId: string, turn: number): void {
   if ((supply[cardId] ?? 0) <= 0) {
     market.displayed = market.displayed.filter((x) => x !== cardId);
   }
+  const before = new Set(market.displayed);
   refillMarket(market.deck, market.displayed);
+  // 若 freshIds 仍是上一回合的旧值(回合切换还没把它清掉就又买卡了,理论上不应发生),
+  // 这里直接用本回合覆盖,避免跨回合污染
+  if (market.freshSetTurn !== turn) {
+    market.freshIds = [];
+    market.freshSetTurn = turn;
+  }
+  for (const id of market.displayed) {
+    if (!before.has(id) && !market.freshIds.includes(id)) {
+      market.freshIds.push(id);
+    }
+  }
 }
 
 /** 给 UI 用:返回当前市场上展示的卡 id 列表 */
@@ -162,6 +176,8 @@ const cloneMarket = (m: MarketDecks | null): MarketDecks | null => {
   return {
     deck: [...m.deck],
     displayed: [...m.displayed],
+    freshIds: [...m.freshIds],
+    freshSetTurn: m.freshSetTurn,
   };
 };
 
@@ -641,7 +657,7 @@ export function buyBuilding(state: GameState, cardId: string): GameState {
   s.builtThisTurn = true;
   pushLog(s, s.active, `购买了「${card.name}」(花费 ${card.cost} 币)`);
   // 市场补牌
-  if (s.market) takeFromMarket(s.market, s.supply, cardId);
+  if (s.market) takeFromMarket(s.market, s.supply, cardId, s.turn);
   return endTurnInternal(s);
 }
 
@@ -690,6 +706,8 @@ function endTurnInternal(s: GameState): GameState {
     s.builtThisTurn = false;
     s.phase = 'roll';
     pushLog(s, s.active, '游乐园:再行动一次');
+    // 注意:不在这里清 freshIds — 同玩家的"再行动"等同于继续本回合,
+    // 且新一回合(对手)还没开始过,该清的逻辑统一交给下面的"切手"分支
     return s;
   }
   s.active = s.active === 0 ? 1 : 0;
@@ -698,5 +716,11 @@ function endTurnInternal(s: GameState): GameState {
   s.rerollUsedThisTurn = false;
   s.builtThisTurn = false;
   s.phase = 'roll';
+
+  // 闪光生命周期:freshIds 在被写入的那一回合产生,要保留给下一位玩家看一整回合,
+  // 直到 *再下一次* 切手时才清。判定:若 freshIds 已存在 ≥ 2 回合前就清空。
+  if (s.market && s.market.freshIds.length && s.turn - s.market.freshSetTurn >= 2) {
+    s.market.freshIds = [];
+  }
   return s;
 }

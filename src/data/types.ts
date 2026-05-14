@@ -41,12 +41,17 @@ export interface LogEntry {
 
 /**
  * 10 种统一市场状态(仅 harbor 模式使用):
- *  - deck     : 唯一牌库(按张计;每个 id 重复 supply 次,已洗牌)
- *  - displayed: 当前场上"露出"的卡 id 集合(去重,最多 10 种)
+ *  - deck         : 唯一牌库(按张计;每个 id 重复 supply 次,已洗牌)
+ *  - displayed    : 当前场上"露出"的卡 id 集合(去重,最多 10 种)
+ *  - freshIds     : 因购买而新补到 displayed 的卡 id(用于 UI 闪光提示)
+ *  - freshSetTurn : freshIds 最后一次被写入时所在的回合号;
+ *                   下一回合一进入就把它清空,确保新一手玩家能看到一整回合的高亮
  */
 export interface MarketDecks {
   deck: string[];
   displayed: string[];
+  freshIds: string[];
+  freshSetTurn: number;
 }
 
 export interface GameState {

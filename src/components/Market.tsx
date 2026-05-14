@@ -45,6 +45,8 @@ export default function Market() {
   const buildPhase = phase === 'build';
   const allCards = getBuildings(mode);
   const cardById = (id: string) => allCards.find((c) => c.id === id);
+  // 本回合新补到市场的卡 id(用于"闪光"动效);base 模式不会出现新补卡
+  const freshSet = new Set(market?.freshIds ?? []);
 
   const canBuyBuilding = (id: string) => {
     if (!buildPhase) return false;
@@ -60,15 +62,16 @@ export default function Market() {
     const left = supply[b.id] ?? 0;
     const enabled = canBuyBuilding(b.id);
     const harborWarn = b.requiresHarbor && !me.landmarks.harbor;
+    const isFresh = freshSet.has(b.id);
     const art = getBuildingArt(b.id);
     const sym = SYMBOL_META[b.symbol];
     return (
       <button
         key={b.id}
-        className={`card ${COLOR_CLASS[b.color]} ${harborWarn ? 'card--needHarbor' : ''}`}
+        className={`card ${COLOR_CLASS[b.color]} ${harborWarn ? 'card--needHarbor' : ''} ${isFresh ? 'card--fresh' : ''}`}
         disabled={!enabled}
         onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
-        title={`${sym.label} · ${b.description}`}
+        title={`${sym.label} · ${b.description}${isFresh ? ' · 新补卡' : ''}`}
         style={art ? { ['--card-art' as string]: `url("${art}")` } : undefined}
       >
         <div className="card__top">
