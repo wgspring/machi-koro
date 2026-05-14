@@ -187,3 +187,58 @@
   .pv__itemName { color: #ddd; }
   .pv__item--trade { background: #3a2e10; }
 }
+
+
+/* ─────────────────────────── 测试模式:指定骰点 ─────────────────────────── */
+.dice__test {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-right: 8px;
+  background: #fff7d6;
+  border: 1px dashed #d4a017;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #6a4a00;
+}
+.dice__testTag {
+  font-weight: 600;
+  color: #b8860b;
+}
+.dice__test label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dice__test input {
+  width: 48px;
+  padding: 2px 4px;
+  border: 1px solid #c9a23b;
+  border-radius: 4px;
+  font: inherit;
+  text-align: center;
+  background: #fff;
+}
+.dice__testClear {
+  padding: 2px 8px;
+  border: 1px solid #c9a23b;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #6a4a00;
+}
+.dice__testClear:hover {
+  background: #fff0b8;
+}
+@media (prefers-color-scheme: dark) {
+  .dice__test {
+    background: #3a2e10;
+    border-color: #c9a23b;
+    color: #ffe8a3;
+  }
+  .dice__test input { background: #1f1a0a; color: #ffe8a3; border-color: #8a6d20; }
+  .dice__testClear { background: #1f1a0a; color: #ffe8a3; border-color: #8a6d20; }
+  .dice__testClear:hover { background: #2a2210; }
+}

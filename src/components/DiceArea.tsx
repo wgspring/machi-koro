@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useGame } from '../state/GameContext';
 import { previewIncome, type IncomeItem } from '../data/engine';
+import { IS_TEST_MODE } from '../data/testMode';
 import './DiceArea.css';
 
 const FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
@@ -67,6 +69,16 @@ export default function DiceArea() {
 
   const preview = previewIncome(state); // resolve 阶段才非空
 
+  // ────────────── 测试模式:指定骰点 ──────────────
+  const [forceD1, setForceD1] = useState<string>('');
+  const [forceD2, setForceD2] = useState<string>('');
+  const parseFace = (s: string): number | undefined => {
+    if (!s.trim()) return undefined;
+    const n = Number(s);
+    return Number.isFinite(n) && n >= 1 && n <= 6 ? Math.floor(n) : undefined;
+  };
+  const buildForced = () => ({ d1: parseFace(forceD1), d2: parseFace(forceD2) });
+
   return (
     <div className="dice">
       {/* 三栏:左玩家预览 | 骰子主体 | 右玩家预览 */}
@@ -101,13 +113,51 @@ export default function DiceArea() {
           </div>
 
           <div className="dice__actions">
+            {IS_TEST_MODE && phase === 'roll' && (
+              <div className="dice__test">
+                <span className="dice__testTag">🧪 测试</span>
+                <label>
+                  d1
+                  <input
+                    type="number"
+                    min={1}
+                    max={6}
+                    placeholder="随机"
+                    value={forceD1}
+                    onChange={(e) => setForceD1(e.target.value)}
+                  />
+                </label>
+                {canTwoDice && (
+                  <label>
+                    d2
+                    <input
+                      type="number"
+                      min={1}
+                      max={6}
+                      placeholder="随机"
+                      value={forceD2}
+                      onChange={(e) => setForceD2(e.target.value)}
+                    />
+                  </label>
+                )}
+                {(forceD1 || forceD2) && (
+                  <button
+                    type="button"
+                    className="dice__testClear"
+                    onClick={() => { setForceD1(''); setForceD2(''); }}
+                  >
+                    清空
+                  </button>
+                )}
+              </div>
+            )}
             {phase === 'roll' && (
               <>
-                <button onClick={() => dispatch({ type: 'ROLL', count: 1 })}>
+                <button onClick={() => dispatch({ type: 'ROLL', count: 1, forced: IS_TEST_MODE ? buildForced() : undefined })}>
                   🎲 投 1 颗
                 </button>
                 {canTwoDice && (
-                  <button onClick={() => dispatch({ type: 'ROLL', count: 2 })}>
+                  <button onClick={() => dispatch({ type: 'ROLL', count: 2, forced: IS_TEST_MODE ? buildForced() : undefined })}>
                     🎲🎲 投 2 颗
                   </button>
                 )}
@@ -130,7 +180,7 @@ export default function DiceArea() {
             {phase === 'resolve' && (
               <>
                 {canReroll && (
-                  <button onClick={() => dispatch({ type: 'REROLL' })}>
+                  <button onClick={() => dispatch({ type: 'REROLL', forced: IS_TEST_MODE ? buildForced() : undefined })}>
                     🔁 电波塔重投
                   </button>
                 )}

@@ -28,6 +28,7 @@ import type {
   GameMode,
   MarketDecks,
 } from './types';
+import { initialCoins } from './testMode';
 
 /* -------------------------------------------------------------------------- */
 /*                                  目录索引                                  */
@@ -113,7 +114,7 @@ const makePlayer = (id: 0 | 1, name: string, mode: GameMode): PlayerState => {
   for (const cid of STARTING_HAND) buildings[cid] = 1;
   const landmarks: Record<string, boolean> = {};
   for (const l of getLandmarks(mode)) landmarks[l.id] = !!l.builtByDefault;
-  return { id, name, coins: 3, buildings, landmarks };
+  return { id, name, coins: initialCoins(), buildings, landmarks };
 };
 
 export function createInitialState(
@@ -185,11 +186,22 @@ const pushLog = (s: GameState, playerId: 0 | 1, text: string): GameState => {
 /*                                  掷骰子                                    */
 /* -------------------------------------------------------------------------- */
 
-export function rollDice(state: GameState, count: 1 | 2): GameState {
+export function rollDice(
+  state: GameState,
+  count: 1 | 2,
+  forced?: { d1?: number; d2?: number },
+): GameState {
   if (state.phase !== 'roll') return state;
   const s = cloneState(state);
-  const d1 = rand6();
-  const d2 = count === 2 ? rand6() : 0;
+  const clamp = (v: number | undefined): number | null => {
+    if (v == null || Number.isNaN(v)) return null;
+    const n = Math.floor(v);
+    return n >= 1 && n <= 6 ? n : null;
+  };
+  const f1 = clamp(forced?.d1);
+  const f2 = clamp(forced?.d2);
+  const d1 = f1 ?? rand6();
+  const d2 = count === 2 ? (f2 ?? rand6()) : 0;
   const sum = d1 + d2;
   const result: DiceResult = {
     d1,
@@ -234,7 +246,10 @@ export function applyHarborBoost(state: GameState, accept: boolean): GameState {
 }
 
 /** 电波塔重投 */
-export function rerollDice(state: GameState): GameState {
+export function rerollDice(
+  state: GameState,
+  forced?: { d1?: number; d2?: number },
+): GameState {
   if (state.phase !== 'resolve' && state.phase !== 'pending-harbor') return state;
   if (!state.lastRoll) return state;
   const player = state.players[state.active];
@@ -242,8 +257,15 @@ export function rerollDice(state: GameState): GameState {
   const s = cloneState(state);
   s.rerollUsedThisTurn = true;
   const count = s.lastRoll!.count;
-  const d1 = rand6();
-  const d2 = count === 2 ? rand6() : 0;
+  const clamp = (v: number | undefined): number | null => {
+    if (v == null || Number.isNaN(v)) return null;
+    const n = Math.floor(v);
+    return n >= 1 && n <= 6 ? n : null;
+  };
+  const f1 = clamp(forced?.d1);
+  const f2 = clamp(forced?.d2);
+  const d1 = f1 ?? rand6();
+  const d2 = count === 2 ? (f2 ?? rand6()) : 0;
   const sum = d1 + d2;
   s.lastRoll = {
     d1,

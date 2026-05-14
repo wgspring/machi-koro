@@ -109,6 +109,43 @@ machi-koro/
 
 ---
 
+## 🧪 测试模式
+
+通过环境变量启用,便于复现 bug、演示卡片效果或快速验证胜利条件。
+
+启用方式(项目根目录新建 `.env.local`):
+
+```bash
+# .env.local
+VITE_TEST_MODE=1
+```
+
+然后重新启动 `npm run dev`(或重新执行 `npm run build`)。也可以在命令行临时开启:
+
+```bash
+VITE_TEST_MODE=1 npm run dev
+```
+
+启用后效果:
+
+- 💰 **双方初始金币变为 500**(常规模式仍为 3 币),方便快速购买地标和高价建筑
+- 🎲 **指定骰点**:掷骰区出现"🧪 测试"输入框,可填入 `d1`、`d2`(1–6)
+  - 留空则该颗骰子保持随机
+  - "投 1 颗"只读取 d1;"投 2 颗"同时读取 d1+d2
+  - 电波塔重投同样会读取当前输入框的指定值
+  - 如想恢复随机,清空输入或点击「清空」按钮即可
+
+> 该开关只在构建期生效(Vite 会把 `import.meta.env.VITE_TEST_MODE` 内联到包中),
+> 因此 **生产部署时不要设置该变量**,以免向真实玩家暴露测试入口。
+
+实现细节:
+
+- 开关定义在 `src/data/testMode.ts`(`IS_TEST_MODE` / `initialCoins()`)
+- 引擎层 `rollDice` / `rerollDice` 接受可选 `forced: { d1?, d2? }` 参数,UI 仅在测试模式下传入
+- 输入会被裁剪到 1–6 区间,非法值自动回退为随机
+
+---
+
 ## 📝 License
 
 仅作学习用途,卡牌玩法版权归原版桌游所有者《Machi Koro》(Masao Suganuma / Pandasaurus Games / Grounding Inc.) 所有。
