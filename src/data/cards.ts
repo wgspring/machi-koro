@@ -1,7 +1,7 @@
 /**
  * 《骰子街》卡牌数据
  *   - 'base'        : 2012 基础版(15 种建筑 + 4 座地标)
- *   - 'harbor'      : 2016 Bright Lights, Big City 合订版(港扩重制版,10 堆市场)
+ *   - 'harbor'      : 2016 港口扩展(港扩重制版,10 堆市场)
  *   - 'millionaire' : 2016 Millionaire's Row 百万富翁(基础 + 14 张新卡 + 公园)
  *   - 'all'         : 三合一(基础 + 港口 + 百万富翁)
  *
@@ -48,7 +48,7 @@ export interface BuildingCard {
   symbol: CardSymbol;
   /** 卡牌所属扩展(决定它在哪些 GameMode 下可用) */
   mode: CardOrigin;
-  /** 是否需要"港口"才能生效(Bright Lights 中港口默认建成,但保留字段以便规则书展示) */
+  /** 是否需要"港口"才能生效(港口扩展 中港口默认建成,但保留字段以便规则书展示) */
   requiresHarbor?: boolean;
 }
 
@@ -58,7 +58,7 @@ export interface LandmarkCard {
   cost: number;
   description: string;
   mode: CardOrigin;
-  /** Bright Lights / Millionaire's Row:部分地标默认建成,不算入"需要建造"的胜利目标 */
+  /** 港口扩展 / Millionaire's Row:部分地标默认建成,不算入"需要建造"的胜利目标 */
   builtByDefault?: boolean;
   /** 隐形地标:不在玩家面板地标格子中显示(只显示效果说明在规则页) */
   hidden?: boolean;
@@ -77,7 +77,7 @@ const BASE_LANDMARKS: LandmarkCard[] = [
 ];
 
 /**
- * Bright Lights 合订版:在基础 4 座之上额外加入 2 座**默认建成**的隐形地标。
+ * 港口扩展:在基础 4 座之上额外加入 2 座**默认建成**的隐形地标。
  * 玩家不需要建造它们,但其规则永久生效。胜利条件仍为"建成全部 4 座可购买地标"。
  */
 const HARBOR_DEFAULT_LANDMARKS: LandmarkCard[] = [
@@ -150,9 +150,9 @@ const BASE_BUILDINGS: BuildingCard[] = [
 ];
 
 /**
- * Bright Lights 合订版**新增**建筑(在基础 15 种之上)。
+ * 港口扩展**新增**建筑(在基础 15 种之上)。
  *  - 鲭鱼船改为🟦蓝色,任何人投出 8 时触发(需港口);
- *  - 删除 fish_boat(渔船)/ flower_orch(独立花田 - 在 Bright Lights 中花田与花店成套,本实现保留花田);
+ *  - 删除 fish_boat(渔船)/ flower_orch(独立花田 - 在 港口扩展 中花田与花店成套,本实现保留花田);
  *  - 出版社的"杯型"含义扩大为 cup + bread(房屋型也含)。
  */
 const HARBOR_BUILDINGS: BuildingCard[] = [
@@ -236,12 +236,12 @@ export function getLandmarks(mode: GameMode): LandmarkCard[] {
   }
 }
 
-/** 按模式获取需要"购买"的地标(用于胜利判定) — Bright Lights 仍是 4 座 */
+/** 按模式获取需要"购买"的地标(用于胜利判定) — 港口扩展 仍是 4 座 */
 export function getBuyableLandmarks(mode: GameMode): LandmarkCard[] {
   return getLandmarks(mode).filter((l) => !l.builtByDefault);
 }
 
-/** 是否启用 Bright Lights 共通机制(10 种市场 + 市政厅) */
+/** 是否启用 港口扩展 共通机制(10 种市场 + 市政厅) */
 export function usesHarborMechanics(mode: GameMode): boolean {
   return mode === 'harbor' || mode === 'all' || mode === 'millionaire';
 }
@@ -282,7 +282,7 @@ export const STARTING_HAND = ['wheat_field', 'bakery'] as const;
 /* -------------------------------------------------------------------------- */
 
 /**
- * Bright Lights 合订版"10 种市场":
+ * 港口扩展"10 种市场":
  *   - 所有可用建筑卡(含紫色)按 supply 数量入**单一牌库**并洗牌
  *   - 场上始终保持 **10 种**不同类型的卡;某种售罄后从牌顶补新种类
  *   - 不区分高/低/紫,纯随机出现

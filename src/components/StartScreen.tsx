@@ -28,7 +28,7 @@ const OPTIONS: ModeOption[] = [
   },
   {
     id: 'harbor',
-    title: 'Bright Lights 合订版',
+    title: '港口扩展',
     subtitle: 'Machi Koro · Bright Lights, Big City (2016)',
     badge: '基础 + 港扩 · 10 种市场',
     accent: '#1aa57c',

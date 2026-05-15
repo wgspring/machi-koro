@@ -59,7 +59,7 @@ function GameBoardInner({
 }) {
   const { state, dispatch } = useGame();
   const modeLabel =
-    state.mode === 'harbor' ? 'Bright Lights 合订版'
+    state.mode === 'harbor' ? '港口扩展'
     : state.mode === 'millionaire' ? '仅百万富翁扩展'
     : state.mode === 'all' ? '三合一(基础+港口+百万富翁)'
     : '基础版';

@@ -87,7 +87,7 @@ export default function Market() {
           {(b.mode === 'harbor' || b.mode === 'millionaire' || renovLocked) && (
             <div className="card__tags">
               {b.mode === 'harbor' && (
-                <span className="card__modeBadge" title="Bright Lights 合订版">港扩</span>
+                <span className="card__modeBadge" title="港口扩展">港扩</span>
               )}
               {b.mode === 'millionaire' && (
                 <span className="card__modeBadge card__modeBadge--mil" title="百万富翁扩展">百扩</span>
@@ -111,7 +111,7 @@ export default function Market() {
     const ids = marketDisplayIds(state) as string[];
     const remaining = market ? market.deck.length : 0;
     const titleSuffix =
-      mode === 'harbor' ? 'Bright Lights 合订版'
+      mode === 'harbor' ? '港口扩展'
       : mode === 'millionaire' ? '仅百万富翁扩展'
       : '三合一(基础+港口+百万富翁)';
     // 按颜色 + 触发点排序,稳定布局

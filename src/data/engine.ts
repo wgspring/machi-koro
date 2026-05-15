@@ -4,7 +4,7 @@
  *
  * 支持两种模式:
  *   - 'base'    : 基础版(15 种建筑 + 4 座地标)
- *   - 'harbor'  : Bright Lights, Big City 合订版(2016 重制版)
+ *   - 'harbor'  : 港口扩展(2016 重制版)
  *               · 市政厅 / 港口 默认建成(builtByDefault)
  *               · 10 堆市场(low / high / purple,场上保持 5/5/2 种)
  *               · 鲭鱼船改为🟦蓝色;无渔船;无机场;无公园
@@ -158,7 +158,7 @@ export function createInitialState(
   for (const b of buildingsFor(mode)) supply[b.id] = b.supply;
 
   const modeLabel =
-    mode === 'harbor' ? 'Bright Lights 合订版'
+    mode === 'harbor' ? '港口扩展'
     : mode === 'millionaire' ? '百万富翁'
     : mode === 'all' ? '三合一(基础+港口+百万富翁)'
     : '基础版';
@@ -375,7 +375,7 @@ const CUP_BONUS_IDS = new Set([
 const cupBonus = (p: PlayerState, id: string) =>
   p.landmarks.mall && CUP_BONUS_IDS.has(id) ? 1 : 0;
 
-/** Bright Lights 出版社规则:对手「☕ cup + 🥐 bread(房屋)」建筑数量之和(排除翻面停用) */
+/** 港口扩展 出版社规则:对手「☕ cup + 🥐 bread(房屋)」建筑数量之和(排除翻面停用) */
 const CUP_LIKE_SYMBOLS: ReadonlySet<string> = new Set(['cup', 'bread']);
 const cupLikeSymbolCount = (s: GameState, p: PlayerState): number => {
   let n = 0;
@@ -387,7 +387,7 @@ const cupLikeSymbolCount = (s: GameState, p: PlayerState): number => {
   return n;
 };
 
-/** Bright Lights 食品仓库规则:仅 ☕ cup 杯型建筑数量(排除翻面停用) */
+/** 港口扩展 食品仓库规则:仅 ☕ cup 杯型建筑数量(排除翻面停用) */
 const cupSymbolCount = (s: GameState, p: PlayerState): number => {
   let n = 0;
   for (const [id, cnt] of Object.entries(p.buildings)) {
@@ -562,7 +562,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
       else if (card.id === 'flower_orch') per = 1;
       else if (card.id === 'mackerel_boat') per = 3;
       else if (card.id === 'tuna_boat') {
-        // Bright Lights 金枪鱼船:全员另投 2 颗骰子,按其和收币(每张 +sum)
+        // 港口扩展 金枪鱼船:全员另投 2 颗骰子,按其和收币(每张 +sum)
         per = tunaRoll ?? 0;
       }
       else if (card.id === 'corn_field') per = 1;
@@ -771,7 +771,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
         });
       }
     } else if (card.id === 'publisher') {
-      // Bright Lights 出版社(修订版):对手每张「☕ cup + 🥐 bread」建筑各让你抢 1 币
+      // 港口扩展 出版社(修订版):对手每张「☕ cup + 🥐 bread」建筑各让你抢 1 币
       const cupN = cupLikeSymbolCount(state, players[opponent]);
       if (cupN > 0) {
         const got = tryTransfer(opponent, active, cupN);
@@ -1278,7 +1278,7 @@ export function buyLandmark(state: GameState, landmarkId: string): GameState {
   s.builtThisTurn = true;
   pushLog(s, s.active, `建成地标「${lm.name}」!`);
 
-  // 胜利判定:建成全部"可购买"地标(Bright Lights 中默认建成的不计入目标)
+  // 胜利判定:建成全部"可购买"地标(港口扩展 中默认建成的不计入目标)
   const target = getBuyableLandmarks(s.mode);
   const all = target.every((l) => s.players[s.active].landmarks[l.id]);
   if (all) {

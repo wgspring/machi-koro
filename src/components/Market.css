@@ -216,7 +216,7 @@
   .card--purple { --card-icon-bg: #2c1c44; --card-icon-bd: #523580; }
 }
 
-/* ===== Bright Lights 合订版:10 种统一市场(5 列 × 2 行) ===== */
+/* ===== 港口扩展:10 种统一市场(5 列 × 2 行) ===== */
 /* harbor 模式:卡片更高,网格上方留空 */
 .market__grid--harbor {
   margin-top: 80px;

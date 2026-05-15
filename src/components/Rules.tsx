@@ -26,7 +26,7 @@ export default function Rules() {
   const buyableLandmarks = landmarks.filter((l) => !l.builtByDefault);
   const defaultLandmarks = landmarks.filter((l) => l.builtByDefault);
   const modeLabel =
-    mode === 'harbor' ? 'Bright Lights 合订版'
+    mode === 'harbor' ? '港口扩展'
     : mode === 'millionaire' ? '仅百万富翁扩展'
     : mode === 'all' ? '三合一(基础+港口+百万富翁)'
     : '基础版';
@@ -99,7 +99,7 @@ export default function Rules() {
                 <td>
                   {l.name}
                   {l.builtByDefault && <span className="rules__tag rules__tag--warn">★ 默认建成</span>}
-                  {l.mode === 'harbor' && !l.builtByDefault && <span className="rules__tag">Bright Lights</span>}
+                  {l.mode === 'harbor' && !l.builtByDefault && <span className="rules__tag">港口扩展</span>}
                   {l.mode === 'millionaire' && !l.builtByDefault && <span className="rules__tag">百万富翁</span>}
                 </td>
                 <td>{l.builtByDefault ? '—' : l.cost}</td>
@@ -135,7 +135,7 @@ export default function Rules() {
                     <td>
                       {c.name}
                       {c.mode === 'harbor' && (
-                        <span className="rules__modeBadge" title="Bright Lights 合订版">港扩</span>
+                        <span className="rules__modeBadge" title="港口扩展">港扩</span>
                       )}
                       {c.mode === 'millionaire' && (
                         <span className="rules__modeBadge rules__modeBadge--mil" title="百万富翁扩展">百扩</span>
@@ -180,7 +180,7 @@ export default function Rules() {
 
       {hasHarbor && (
         <section>
-          <h2>六、Bright Lights 合订版要点</h2>
+          <h2>六、港口扩展要点</h2>
           <ul>
             <li><strong>市政厅 / 港口</strong>:开局即默认建成,不计入胜利目标。</li>
             <li><strong>10 种统一市场</strong>:所有可用建筑卡(含紫色)按 supply 入唯一牌库洗牌,场上始终保持 10 种不同类型;某种售罄后从牌顶补新种类。</li>

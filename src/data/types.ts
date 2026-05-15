@@ -71,7 +71,7 @@ export interface GameState {
   players: [PlayerState, PlayerState];
   /** 公共卡池剩余:卡牌 id -> 数量
    *  - base 模式:全局可买次数(从初始 supply 递减)
-   *  - harbor 模式(Bright Lights):**摊位上当前堆叠的张数**(忠于原版桌游);
+   *  - harbor 模式(港口扩展):**摊位上当前堆叠的张数**(忠于原版桌游);
    *    超出的同名卡留在 deck 里,等到这一摞被买光、该种类槽被新种替换、
    *    未来再次被翻到牌顶时才会重新出现。
    */

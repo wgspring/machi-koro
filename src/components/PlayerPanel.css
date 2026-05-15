@@ -293,7 +293,7 @@
 }
 
 
-/* ===== Bright Lights:默认建成地标(采用玩家主题色) ===== */
+/* ===== 港口扩展:默认建成地标(采用玩家主题色) ===== */
 .pp__lm--default .pp__lmBtn {
   border: 1px solid color-mix(in srgb, var(--my-color) 55%, transparent);
   background: linear-gradient(

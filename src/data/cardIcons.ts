@@ -24,7 +24,7 @@ export const BUILDING_ICONS: Record<string, string> = {
   tv_station:     '📺',
   business_ctr:   '🏢',
 
-  // ===== Bright Lights 合订版新增 =====
+  // ===== 港口扩展新增 =====
   // 蓝色
   flower_orch:    '🌷',
   mackerel_boat:  '🎣',
@@ -46,7 +46,7 @@ export const LANDMARK_ICONS: Record<string, string> = {
   mall:        '🛍️',
   amusement:   '🎡',
   radio_tower: '📡',
-  // Bright Lights 默认建成
+  // 港口扩展 默认建成
   city_hall:   '🏛️',
   harbor:      '⚓',
 };
