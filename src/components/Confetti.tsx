@@ -26,8 +26,8 @@ const WINNER_PALETTE: Record<0 | 1, string[]> = {
   1: ['#FF7A45', '#FFAB6B', '#FFC832', '#FFFFFF', '#FF4D6D'],
 };
 
-const GRAVITY = 0.18;
-const DRAG = 0.992;
+const GRAVITY = 0.05;
+const DRAG = 0.98;
 /** 持续模式下,每隔多少 ms 触发一波 */
 const BURST_INTERVAL_MS = 900;
 /** 在屏幕上的最大粒子数(超过则不再生成新 burst,避免性能崩) */
@@ -110,7 +110,7 @@ export default function Confetti({ active, winner }: Props) {
           color: pick(palette),
           shape,
           life: 0,
-          maxLife: Math.floor(rand(160, 260)),
+          maxLife: Math.floor(rand(280, 420)),
           alpha: 1,
         });
       }
