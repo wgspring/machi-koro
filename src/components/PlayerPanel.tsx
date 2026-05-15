@@ -100,6 +100,9 @@ function LandmarkList({ player, isOwner }: { player: PlayerState; isOwner: boole
               <span className="pp__lmName">
                 <span className="pp__lmIcon" aria-hidden>{getLandmarkIcon(lm.id)}</span>
                 {lm.name}
+                {lm.mode === 'harbor' && !lm.builtByDefault && (
+                  <span className="pp__lmTag pp__lmTag--harbor" title="港口扩展">港扩</span>
+                )}
                 {canBuy && <span className="pp__lmHint">点击建造</span>}
               </span>
               {showCost && <span className="pp__lmCost">{costLabel}</span>}

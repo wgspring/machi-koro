@@ -269,7 +269,7 @@ export function rollDice(
     `掷骰:${count === 2 ? `${d1}+${d2}=${sum}` : `${d1}`}${result.isDouble ? '(豹子!)' : ''}`,
   );
 
-  // 港口 +2:仅在该模式默认建成港口、且玩家拥有港口、双骰且点数 ≥10 时可选
+  // 港口 +2:仅在该模式启用港口机制、且玩家已建成港口、双骰且点数 ≥10 时可选
   const me = s.players[s.active];
   if (hasHarborLandmark(s.mode) && me.landmarks.harbor && count === 2 && sum >= 10) {
     s.phase = 'pending-harbor';
@@ -281,7 +281,7 @@ export function rollDice(
   return s;
 }
 
-/** 港口 +2 决策(仅当模式默认建成港口) */
+/** 港口 +2 决策(仅当玩家已建成港口) */
 export function applyHarborBoost(state: GameState, accept: boolean): GameState {
   if (state.phase !== 'pending-harbor' || !state.lastRoll) return state;
   const s = cloneState(state);
@@ -436,6 +436,8 @@ export interface IncomeBreakdown {
     techMarkerGain?: number;
     /** 公园:本次结算后,两人金币池均分 */
     parkRedistribute?: boolean;
+    /** 会展中心:本次触发后,主动玩家手中 exhibit_hall -1,1 张放回市场 deck */
+    exhibitConsumed?: boolean;
   };
 }
 
@@ -461,14 +463,14 @@ function getTunaRoll(state: GameState): number {
  *  - demolishLandmarkIds:拆迁公司:依次要拆的地标 id 列表(长度 = demolish 触发次数)
  *  - movingGiveIds      :搬家公司:依次要送出的非紫卡 id 列表
  *  - renovationLockId   :装修公司:要锁定的对手非紫卡 id
- *  - exhibitChargeId    :会展中心:要收税的对手非紫卡 id
+ *  - exhibitActivateId  :会展中心:要激活的己方非紫卡 id(用于触发其全部张数收益)
  *  - techPlace          :科技公司:本次是否放标记(true/false)
  */
 export interface ResolveChoices {
   demolishLandmarkIds?: string[];
   movingGiveIds?: string[];
   renovationLockId?: string;
-  exhibitChargeId?: string;
+  exhibitActivateId?: string;
   techPlace?: boolean;
 }
 
@@ -553,8 +555,8 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
       if (isRenovationLocked(state, card.id)) continue;
       const cnt = countOf(players[pid], card.id);
       if (cnt === 0) continue;
-      // 百万富翁 · 玉米田:仅在该玩家 ≤2 地标时生效
-      if (card.id === 'corn_field' && builtLandmarkCount(players[pid]) > 2) continue;
+      // 百万富翁 · 玉米田:仅在该玩家 ≤1 地标时生效
+      if (card.id === 'corn_field' && builtLandmarkCount(players[pid]) > 1) continue;
       let per = 0;
       if (card.id === 'wheat_field' || card.id === 'ranch' || card.id === 'forest') per = 1;
       else if (card.id === 'mine') per = 5;
@@ -591,7 +593,10 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     else if (card.id === 'convenience') perCardBase = 3;
     else if (card.id === 'cheese_factory') perCardBase = 3 * countOf(me, 'ranch');
     else if (card.id === 'furniture') perCardBase = 3 * (countOf(me, 'forest') + countOf(me, 'mine'));
-    else if (card.id === 'market') perCardBase = 2 * (countOf(me, 'wheat_field') + countOf(me, 'apple_orchard'));
+    else if (card.id === 'market') perCardBase = 3 * (
+      countOf(me, 'wheat_field') + countOf(me, 'apple_orchard')
+      + countOf(me, 'flower_orch') + countOf(me, 'corn_field') + countOf(me, 'vineyard')
+    );
     else if (card.id === 'flower_shop') perCardBase = 1 * countOf(me, 'flower_orch');
     else if (card.id === 'food_warehouse') perCardBase = 2 * cupSymbolCount(state, me);
     // 百万富翁 · 杂货店 +2 币
@@ -791,7 +796,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
         }
       }
     } else if (card.id === 'renovation') {
-      // 装修公司(自骰 8):选定一种非紫卡牌,对手每张该卡支付你 8 币;此后该卡全场停用
+      // 装修公司(自骰 8):选定一种非紫卡牌,对手每张该卡支付你 1 币;此后该卡全场停用
       // 规则:本卡再次触发时,**先解除上一次的锁定**(即使本次因对手无可锁卡而提前 continue,
       // 也要让旧锁失效)
       if (state.renovationLockedKind) {
@@ -816,7 +821,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
         lockId = oppNonPurple[0].id;
       }
       const targetN = oppNonPurple.find((x) => x.id === lockId)!.n;
-      const owe = targetN * 8;
+      const owe = targetN * 1;
       const got = tryTransfer(opponent, active, owe);
       if (got > 0) {
         items[active].push({
@@ -861,35 +866,68 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
         });
       }
     } else if (card.id === 'exhibit_hall') {
-      // 会展中心(自骰 11-12):选对手一种非紫卡牌,对手每张该卡支付你 4 币
-      const oppNonPurple = Object.entries(players[opponent].buildings)
+      // 会展中心(自骰 11-12):激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库
+      // 收益按"该卡平时一次完整触发"计算(蓝/绿正常 +币;红色因主动触发者=自己,跳过抢钱)
+      const me = players[active];
+      const myNonPurple = Object.entries(me.buildings)
         .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
-        .map(([id, n]) => ({ id, n, cost: CATALOG.byId[id].cost }));
-      if (oppNonPurple.length === 0) continue;
-      let chargeId: string;
-      if (ch.exhibitChargeId && oppNonPurple.some((x) => x.id === ch.exhibitChargeId)) {
-        chargeId = ch.exhibitChargeId;
+        .map(([id, n]) => ({ id, n, cost: CATALOG.byId[id].cost, color: CATALOG.byId[id].color }));
+      if (myNonPurple.length === 0) continue;
+      let actId: string;
+      if (ch.exhibitActivateId && myNonPurple.some((x) => x.id === ch.exhibitActivateId)) {
+        actId = ch.exhibitActivateId;
       } else {
-        oppNonPurple.sort((a, b) => (b.n - a.n) || (b.cost - a.cost));
-        chargeId = oppNonPurple[0].id;
+        // 默认:选一张产出最高的非紫卡。简单启发式:成本最高 → 数量最多
+        myNonPurple.sort((a, b) => (b.cost - a.cost) || (b.n - a.n));
+        actId = myNonPurple[0].id;
       }
-      const targetN = oppNonPurple.find((x) => x.id === chargeId)!.n;
-      const owe = targetN * 4;
-      const got = tryTransfer(opponent, active, owe);
-      if (got > 0) {
+      const targetCard = CATALOG.byId[actId];
+      const targetN = myNonPurple.find((x) => x.id === actId)!.n;
+      // 计算"按 targetN 张该卡触发一次"的单张产出
+      let perCardBase = 0;
+      if (targetCard.color === 'blue') {
+        if (actId === 'wheat_field' || actId === 'ranch' || actId === 'forest' || actId === 'flower_orch') perCardBase = 1;
+        else if (actId === 'mine') perCardBase = 5;
+        else if (actId === 'apple_orchard' || actId === 'vineyard') perCardBase = 3;
+        else if (actId === 'mackerel_boat') perCardBase = me.landmarks.harbor ? 3 : 0;
+        else if (actId === 'tuna_boat') perCardBase = me.landmarks.harbor ? (getTunaRoll(state)) : 0;
+        else if (actId === 'corn_field') perCardBase = builtLandmarkCount(me) <= 1 ? 1 : 0;
+      } else if (targetCard.color === 'green') {
+        if (actId === 'bakery') perCardBase = 1;
+        else if (actId === 'convenience') perCardBase = 3;
+        else if (actId === 'cheese_factory') perCardBase = 3 * countOf(me, 'ranch');
+        else if (actId === 'furniture') perCardBase = 3 * (countOf(me, 'forest') + countOf(me, 'mine'));
+        else if (actId === 'market') perCardBase = 3 * (
+          countOf(me, 'wheat_field') + countOf(me, 'apple_orchard')
+          + countOf(me, 'flower_orch') + countOf(me, 'corn_field') + countOf(me, 'vineyard')
+        );
+        else if (actId === 'flower_shop') perCardBase = 1 * countOf(me, 'flower_orch');
+        else if (actId === 'food_warehouse') perCardBase = 2 * cupSymbolCount(state, me);
+        else if (actId === 'general_store') perCardBase = builtLandmarkCount(me) <= 1 ? 2 : 0;
+        else if (actId === 'winery') perCardBase = 6 * countOf(me, 'vineyard');
+        // demolition / loan_office / moving_co / soda_factory:有特殊结构,会展中心简化为不触发,避免循环依赖
+      }
+      // 红色不抢钱(用户确认:激活红卡不抢)
+      const perCard = perCardBase + cupBonus(me, actId);
+      const gain = perCard * targetN;
+      if (gain > 0) {
+        coins[active] += gain;
         items[active].push({
-          cardName: `${card.name}(对「${CATALOG.byId[chargeId].name}」收税)`,
+          cardName: `${card.name}(激活「${targetCard.name}」×${targetN})`,
           count: targetN,
-          delta: got,
+          delta: gain,
           category: 'purple-coin',
         });
-        items[opponent].push({
-          cardName: `被${card.name}对 ${targetN} 张「${CATALOG.byId[chargeId].name}」收税`,
+      } else {
+        items[active].push({
+          cardName: `${card.name}(激活「${targetCard.name}」×${targetN})`,
           count: targetN,
-          delta: -got,
+          delta: 0,
           category: 'purple-coin',
         });
       }
+      // 标记本次会展中心被消耗
+      effects.exhibitConsumed = true;
     } else if (card.id === 'park') {
       // 公园(自骰 11-13):全场金币均分(向上取整)
       effects.parkRedistribute = true;
@@ -1022,14 +1060,14 @@ function detectPendingChoices(state: GameState): PendingChoice[] {
     }
   }
 
-  // 会展中心:自骰 11-12,且对手有非紫卡
+  // 会展中心:自骰 11-12,且己方有非紫卡可激活
   if (has('exhibit_hall') && has('exhibit_hall')!.activation.includes(sum)
       && countOf(me, 'exhibit_hall') > 0) {
-    const oppNonPurple = Object.entries(opp.buildings)
+    const myNonPurpleForExhibit = Object.entries(me.buildings)
       .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
       .map(([id]) => id);
-    if (oppNonPurple.length > 0) {
-      out.push({ kind: 'exhibit', playerId: active, options: oppNonPurple });
+    if (myNonPurpleForExhibit.length > 0) {
+      out.push({ kind: 'exhibit', playerId: active, options: myNonPurpleForExhibit });
     }
   }
 
@@ -1065,7 +1103,7 @@ export function submitChoice(
   } else if (payload.kind === 'renovation') {
     rc.renovationLockId = payload.buildingId;
   } else if (payload.kind === 'exhibit') {
-    rc.exhibitChargeId = payload.buildingId;
+    rc.exhibitActivateId = payload.buildingId;
   } else if (payload.kind === 'tech') {
     rc.techPlace = payload.place;
   }
@@ -1165,6 +1203,24 @@ function finalizeResolve(state: GameState): GameState {
     }
     if (eff.techMarkerGain && eff.techMarkerGain > 0) {
       me.techMarkers = (me.techMarkers ?? 0) + eff.techMarkerGain;
+    }
+    // 会展中心:每次触发消耗 1 张,放回市场卡库
+    if (eff.exhibitConsumed && (me.buildings['exhibit_hall'] ?? 0) > 0) {
+      me.buildings['exhibit_hall']! -= 1;
+      if (s.market) {
+        // 把 1 张放回 deck 顶部并触发补牌
+        s.market.deck.push('exhibit_hall');
+        s.supply['exhibit_hall'] = (s.supply['exhibit_hall'] ?? 0) + 1;
+        // 重新进入"摊上若有空位则补出该卡"的判定
+        // 复用 takeFromMarket 风格:先不挪 displayed,只 refill 让 deck 顶若 ≤ 10 种自然补出
+        // 直接触发一次 refill:利用现有 helper(displayed 暂时移除一个最少种也行,这里简单调用 takeFromMarket 反向不合适)
+        // 简化:直接把 supply ++ 即视为"已放回 deck",刷新 displayed 让其上摊:
+        // —— 若 displayed 已含 exhibit_hall,supply++ 即生效;若不含,把 deck 顶部该 id 推入 displayed(若位置不满)
+        if (!s.market.displayed.includes('exhibit_hall') && s.market.displayed.length < 10) {
+          s.market.displayed.push('exhibit_hall');
+        }
+      }
+      pushLog(s, active, `🏟️ 会展中心:激活后将 1 张本卡放回市场`);
     }
   }
 
@@ -1294,6 +1350,11 @@ export function skipBuild(state: GameState): GameState {
   if (state.phase !== 'build') return state;
   const s = cloneState(state);
   pushLog(s, s.active, '跳过建造');
+  // 机场:跳过建造时,从银行获得 10 币
+  if (s.players[s.active].landmarks['airport']) {
+    s.players[s.active].coins += 10;
+    pushLog(s, s.active, `✈️ 机场:跳过建造,从银行获得 10 币`);
+  }
   return endTurnInternal(s);
 }
 

@@ -19,7 +19,6 @@ export const SYMBOL_META: Record<CardSymbol, SymbolMeta> = {
   cup:     { emoji: '☕', label: '杯型',   full: '☕ 杯型' },
   bread:   { emoji: '🥐', label: '面包型', full: '🥐 面包型' },
   factory: { emoji: '🏭', label: '工厂型', full: '🏭 工厂型' },
-  fruit:   { emoji: '🍎', label: '水果型', full: '🍎 水果型' },
   fish:    { emoji: '🐟', label: '鱼型',   full: '🐟 鱼型' },
   business:{ emoji: '🏢', label: '公司型', full: '🏢 公司型' },
   major:   { emoji: '🌆', label: '大型设施', full: '🌆 大型设施' },

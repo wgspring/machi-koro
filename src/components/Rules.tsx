@@ -77,7 +77,7 @@ export default function Rules() {
         <ol>
           <li><strong>掷骰子</strong>:默认 1 颗骰子;建成"火车站"后可选 1 或 2 颗。</li>
           {hasHarbor && (
-            <li><strong>港口加成</strong>:港口默认建成,但仅在<strong>双骰且点数 ≥10</strong> 时,可选择给点数 +2。</li>
+            <li><strong>港口加成</strong>:建成<strong>港口</strong>地标后,在<strong>双骰且点数 ≥10</strong> 时,可选择给点数 +2。</li>
           )}
           <li><strong>结算收益</strong>:按建筑颜色触发,顺序为 红 → 蓝/绿 → 紫。</li>
           {usesUnified && (
@@ -182,12 +182,12 @@ export default function Rules() {
         <section>
           <h2>六、港口扩展要点</h2>
           <ul>
-            <li><strong>市政厅 / 港口</strong>:开局即默认建成,不计入胜利目标。</li>
+            <li><strong>市政厅</strong>(默认建成):进入建造阶段时,若金币 &lt;1,自动补到 1 币。</li>
+            <li><strong>港口</strong>(可购买,2 币):建成后,双骰且和 ≥10 时可选择给点数 +2。</li>
+            <li><strong>机场</strong>(可购买,30 币):本回合<strong>跳过建造</strong>时,从银行获得 10 币。</li>
             <li><strong>10 种统一市场</strong>:所有可用建筑卡(含紫色)按 supply 入唯一牌库洗牌,场上始终保持 10 种不同类型;某种售罄后从牌顶补新种类。</li>
-            <li><strong>港口 +2</strong>:仅在<strong>双骰且和 ≥10</strong> 时可选择 +2 点。</li>
-            <li><strong>市政厅</strong>:进入建造阶段时,若金币 &lt;1,自动补到 1 币。</li>
-            <li><strong>鲭鱼船</strong>(蓝 8):任何人投出 8 时 +3 币。</li>
-            <li><strong>金枪鱼船</strong>(蓝 12-14):触发时另投 2 颗骰,所有持有者按其和 +币(每张)。</li>
+            <li><strong>鲭鱼船</strong>(蓝 8):需<strong>已建成港口</strong>;任何人投出 8 时 +3 币。</li>
+            <li><strong>金枪鱼船</strong>(蓝 12-14):需<strong>已建成港口</strong>;触发时另投 2 颗骰,所有持有者按其和 +币(每张)。</li>
             <li><strong>出版社</strong>(紫 7):对手每张「☕ 杯型 + 🥐 面包型」建筑各让你抢 1 币。</li>
             <li><strong>税务局</strong>(紫 8-9):金币 ≥10 的对手,被你抽走其一半(向下取整)。</li>
           </ul>
@@ -198,20 +198,19 @@ export default function Rules() {
         <section>
           <h2>{hasHarbor ? '七' : '六'}、百万富翁扩展要点</h2>
           <ul>
-            <li><strong>市政厅</strong>:开局即默认建成,与 harbor 同。</li>
-            <li><strong>玉米田</strong>(蓝 3-4):仅在你 ≤2 地标时,每张 +1 币。</li>
+            <li><strong>玉米田</strong>(蓝 3-4,造价 2):仅在你 ≤1 地标时,每张 +1 币。</li>
             <li><strong>葡萄园</strong>(蓝 7):每张 +3 币(为葡萄酒庄供能)。</li>
             <li><strong>法国餐厅</strong>(红 5):对方需 ≥2 地标,每张抢 5 币。</li>
             <li><strong>会员俱乐部</strong>(红 12-14):对方需 ≥3 地标,直接抢光对方所有金币。</li>
-            <li><strong>杂货店</strong>(绿 2):仅在你 ≤1 地标时,每张 +2 币(免费购买)。</li>
-            <li><strong>拆迁公司</strong>(绿 4):每张让你拆 1 座地标 + 银行付 8 币。</li>
+            <li><strong>杂货店</strong>(绿 2):仅在你 ≤1 地标时,每张 +2 币(免费购买;购物中心 +1)。</li>
+            <li><strong>拆迁公司</strong>(绿 4):每张让你拆 1 座自己的地标,银行付 8 币。</li>
             <li><strong>借贷公司</strong>(绿 5-6,成本 -5):购买时反给你 5 币,每张让你付每位对手 2 币。</li>
             <li><strong>葡萄酒庄</strong>(绿 9):每张 × 葡萄园数 × 6 币;触发后此卡永久翻面停用。</li>
             <li><strong>搬家公司</strong>(绿 9-10):每张送对手一张非紫卡,从他拿 4 币。</li>
             <li><strong>饮料工厂</strong>(绿 11):任何人骰 11,所有持有者按全场 ☕ 杯型总数 +1 币 / 张。</li>
-            <li><strong>装修公司</strong>(紫 8):选定一种非紫卡;对手每张该卡支付你 8 币;此后该卡全场停用。</li>
+            <li><strong>装修公司</strong>(紫 8):选定一种非紫卡;对手每张该卡支付你 <strong>1 币</strong>;此后该卡全场停用。</li>
             <li><strong>科技公司</strong>(紫 10):自骰 10 时累加 1 个标记;对手骰 10 时,你按标记数从对手处收钱。</li>
-            <li><strong>会展中心</strong>(紫 11-12):选对手一种非紫卡,每张让其付你 4 币。</li>
+            <li><strong>会展中心</strong>(紫 11-12,造价 7):激活己方一种非紫卡的全部张数,然后将本卡放回市场卡库;触发其中红卡时不计抢钱。</li>
             <li><strong>公园</strong>(紫 11-13):全场金币均分(向上取整)。</li>
           </ul>
         </section>

@@ -58,6 +58,7 @@ import radioTower     from '../assets/cardbg/landmarks/radio_tower.webp';
 // === 港口扩展地标 ===
 import cityHall       from '../assets/cardbg/landmarks/city_hall.webp';
 import harbor         from '../assets/cardbg/landmarks/harbor.webp';
+import airport        from '../assets/cardbg/landmarks/airport.webp';
 
 export const BUILDING_ART: Record<string, string> = {
   // 基础版
@@ -113,6 +114,7 @@ export const LANDMARK_ART: Record<string, string> = {
   // 港口扩展
   city_hall: cityHall,
   harbor,
+  airport,
 };
 
 export function getBuildingArt(id: string): string | undefined {

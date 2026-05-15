@@ -268,24 +268,24 @@
 }
 
 
-/* 港口扩展地标:右上角小角标 */
-.pp__lm--harbor .pp__lmBtn::after {
-  content: '港扩';
-  position: absolute;
-  top: 4px;
-  right: 6px;
+/* 港口扩展地标:名称后内联徽章(避让右上金币区) */
+.pp__lmTag {
+  display: inline-block;
   font-size: .58rem;
+  font-weight: 700;
   letter-spacing: 1px;
+  padding: 0 5px;
+  border-radius: 4px;
+  line-height: 1.45;
+  vertical-align: middle;
+}
+.pp__lmTag--harbor {
   background: #fff5e0;
   color: #b07b00;
   border: 1px solid #ffd99c;
-  padding: 0 4px;
-  border-radius: 4px;
-  z-index: 2;
-  pointer-events: none;
 }
 @media (prefers-color-scheme: dark) {
-  .pp__lm--harbor .pp__lmBtn::after {
+  .pp__lmTag--harbor {
     background: #3a2e10;
     color: #ffd071;
     border-color: #6c5618;

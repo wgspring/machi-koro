@@ -46,9 +46,10 @@ export const LANDMARK_ICONS: Record<string, string> = {
   mall:        '🛍️',
   amusement:   '🎡',
   radio_tower: '📡',
-  // 港口扩展 默认建成
+  // 港口扩展
   city_hall:   '🏛️',
   harbor:      '⚓',
+  airport:     '✈️',
 };
 
 /** 兜底图标:未配置时返回一个通用积木 */
