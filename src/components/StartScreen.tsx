@@ -39,6 +39,33 @@ const OPTIONS: ModeOption[] = [
       '🟪 出版社(7,☕+🥐) · 🏛️ 税务局(8-9,对 ≥10 币抽税)',
     ],
   },
+  {
+    id: 'millionaire',
+    title: '仅百万富翁扩展',
+    subtitle: 'Machi Koro · Millionaire\'s Row',
+    badge: '基础 + 百扩 · 10 种市场',
+    accent: '#d97706',
+    highlights: [
+      '🏛️ 市政厅默认建成,基础地标(站/购/园/塔)仍需建造',
+      '🛒 10 种共享市场,加入 14 张百万富翁新卡',
+      '🌽 玉米田 / 🍇 葡萄园 · 🥖 杂货店 / 🍷 葡萄酒庄(用一次翻面)',
+      '🚧 拆迁公司 / 💰 借贷公司(成本 -5) / 🏢 搬家公司',
+      '🛠️ 装修公司(全场锁卡) · 💻 科技公司(标记) · 🌳 公园(均分金币)',
+    ],
+  },
+  {
+    id: 'all',
+    title: '三合一(基础+港口+百万富翁)',
+    subtitle: 'All Expansions Mashup',
+    badge: '40+ 种 · 完整体验',
+    accent: '#a855f7',
+    highlights: [
+      '🏛️ 市政厅 + ⚓ 港口 默认建成,集结全部官方扩展卡',
+      '🛒 10 种共享市场,从超大牌库中露出最多变化',
+      '同时拥有港口的 ⚓ 海上经济与百万富翁的 🌳 高复杂度互动',
+      '局长 · 单局 ~50-70 分钟,推荐熟手挑战',
+    ],
+  },
 ];
 
 export default function StartScreen({ onStart }: { onStart: (mode: GameMode) => void }) {

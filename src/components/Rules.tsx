@@ -25,7 +25,14 @@ export default function Rules() {
   const landmarks = getLandmarks(mode);
   const buyableLandmarks = landmarks.filter((l) => !l.builtByDefault);
   const defaultLandmarks = landmarks.filter((l) => l.builtByDefault);
-  const modeLabel = mode === 'harbor' ? 'Bright Lights 合订版' : '基础版';
+  const modeLabel =
+    mode === 'harbor' ? 'Bright Lights 合订版'
+    : mode === 'millionaire' ? '仅百万富翁扩展'
+    : mode === 'all' ? '三合一(基础+港口+百万富翁)'
+    : '基础版';
+  const usesUnified = mode !== 'base';
+  const hasHarbor = mode === 'harbor' || mode === 'all';
+  const hasMillionaire = mode === 'millionaire' || mode === 'all';
 
   // 汇总分组
   const grouped = COLOR_ORDER.map((c) => ({
@@ -50,8 +57,8 @@ export default function Rules() {
         <p>
           率先建成自己城市的<strong>全部 {buyableLandmarks.length} 座可购地标</strong>
           的玩家获胜。
-          {mode === 'harbor' && defaultLandmarks.length > 0 && (
-            <> Bright Lights 合订版中,<strong>{defaultLandmarks.map((l) => l.name).join(' / ')}</strong> 默认建成,不计入胜利目标。</>
+          {usesUnified && defaultLandmarks.length > 0 && (
+            <> 当前模式中,<strong>{defaultLandmarks.map((l) => l.name).join(' / ')}</strong> 默认建成,不计入胜利目标。</>
           )}
         </p>
       </section>
@@ -69,11 +76,11 @@ export default function Rules() {
         <h2>三、回合流程</h2>
         <ol>
           <li><strong>掷骰子</strong>:默认 1 颗骰子;建成"火车站"后可选 1 或 2 颗。</li>
-          {mode === 'harbor' && (
+          {hasHarbor && (
             <li><strong>港口加成</strong>:港口默认建成,但仅在<strong>双骰且点数 ≥10</strong> 时,可选择给点数 +2。</li>
           )}
           <li><strong>结算收益</strong>:按建筑颜色触发,顺序为 红 → 蓝/绿 → 紫。</li>
-          {mode === 'harbor' && (
+          {usesUnified && (
             <li><strong>市政厅补偿</strong>:进入建造阶段时,若你的金币 &lt; 1,自动补到 1 币。</li>
           )}
           <li><strong>建造</strong>:可购买 1 张新建筑或建造 1 座地标,也可不建。</li>
@@ -93,6 +100,7 @@ export default function Rules() {
                   {l.name}
                   {l.builtByDefault && <span className="rules__tag rules__tag--warn">★ 默认建成</span>}
                   {l.mode === 'harbor' && !l.builtByDefault && <span className="rules__tag">Bright Lights</span>}
+                  {l.mode === 'millionaire' && !l.builtByDefault && <span className="rules__tag">百万富翁</span>}
                 </td>
                 <td>{l.builtByDefault ? '—' : l.cost}</td>
                 <td>{l.description}</td>
@@ -127,6 +135,7 @@ export default function Rules() {
                     <td>
                       {c.name}
                       {c.mode === 'harbor' && <span className="rules__tag">港扩</span>}
+                      {c.mode === 'millionaire' && <span className="rules__tag">百扩</span>}
                       {c.requiresHarbor && <span className="rules__tag rules__tag--warn">⚓ 需港口</span>}
                     </td>
                     <td>{SYMBOL_META[c.symbol].full}</td>
@@ -166,7 +175,7 @@ export default function Rules() {
         </p>
       </section>
 
-      {mode === 'harbor' && (
+      {hasHarbor && (
         <section>
           <h2>六、Bright Lights 合订版要点</h2>
           <ul>
@@ -182,14 +191,40 @@ export default function Rules() {
         </section>
       )}
 
+      {hasMillionaire && (
+        <section>
+          <h2>{hasHarbor ? '七' : '六'}、百万富翁扩展要点</h2>
+          <ul>
+            <li><strong>市政厅</strong>:开局即默认建成,与 harbor 同。</li>
+            <li><strong>玉米田</strong>(蓝 3-4):仅在你 ≤2 地标时,每张 +1 币。</li>
+            <li><strong>葡萄园</strong>(蓝 7):每张 +3 币(为葡萄酒庄供能)。</li>
+            <li><strong>法国餐厅</strong>(红 5):对方需 ≥2 地标,每张抢 5 币。</li>
+            <li><strong>会员俱乐部</strong>(红 12-14):对方需 ≥3 地标,直接抢光对方所有金币。</li>
+            <li><strong>杂货店</strong>(绿 2):仅在你 ≤1 地标时,每张 +2 币(免费购买)。</li>
+            <li><strong>拆迁公司</strong>(绿 4):每张让你拆 1 座地标 + 银行付 8 币。</li>
+            <li><strong>借贷公司</strong>(绿 5-6,成本 -5):购买时反给你 5 币,每张让你付每位对手 2 币。</li>
+            <li><strong>葡萄酒庄</strong>(绿 9):每张 × 葡萄园数 × 6 币;触发后此卡永久翻面停用。</li>
+            <li><strong>搬家公司</strong>(绿 9-10):每张送对手一张非紫卡,从他拿 4 币。</li>
+            <li><strong>饮料工厂</strong>(绿 11):任何人骰 11,所有持有者按全场 ☕ 杯型总数 +1 币 / 张。</li>
+            <li><strong>装修公司</strong>(紫 8):选定一种非紫卡;对手每张该卡支付你 8 币;此后该卡全场停用。</li>
+            <li><strong>科技公司</strong>(紫 10):自骰 10 时累加 1 个标记;对手骰 10 时,你按标记数从对手处收钱。</li>
+            <li><strong>会展中心</strong>(紫 11-12):选对手一种非紫卡,每张让其付你 4 币。</li>
+            <li><strong>公园</strong>(紫 11-13):全场金币均分(向上取整)。</li>
+          </ul>
+        </section>
+      )}
+
       <section>
-        <h2>{mode === 'harbor' ? '七' : '六'}、关键策略提示</h2>
+        <h2>{(hasHarbor && hasMillionaire) ? '八' : (hasHarbor || hasMillionaire) ? '七' : '六'}、关键策略提示</h2>
         <ul>
           <li>早建火车站,解锁双骰后高点数建筑才有触发空间。</li>
           <li>平衡蓝绿红:蓝色稳定、绿色爆发、红色压制对手。</li>
           <li>紫色建筑是翻盘点:基础版 6 点齐发,港口扩展 7-9 点干扰更强。</li>
-          {mode === 'harbor' && <li>出版社针对「☕ 杯型 + 🥐 面包型」建筑总数,所以早期密集铺面包店 / 便利店的对手会成为你的"鱼塘"。</li>}
-          {mode === 'harbor' && <li>金枪鱼船触发时全员另投 2 骰,期望 +7,适合在已铺垫 ≥2 张时购买。</li>}
+          {hasHarbor && <li>出版社针对「☕ 杯型 + 🥐 面包型」建筑总数,所以早期密集铺面包店 / 便利店的对手会成为你的"鱼塘"。</li>}
+          {hasHarbor && <li>金枪鱼船触发时全员另投 2 骰,期望 +7,适合在已铺垫 ≥2 张时购买。</li>}
+          {hasMillionaire && <li>百万富翁的"≤地标数"前置卡(玉米田/杂货店)早期收益猛,但建到 2-3 座地标后会断供,要主动转型。</li>}
+          {hasMillionaire && <li>葡萄酒庄触发后翻面,因此多张葡萄园 + 1 张酒庄的"一发入魂"组合更高效。</li>}
+          {hasMillionaire && <li>装修公司锁卡 + 拆迁公司拆地标可以打乱对手节奏,但拆掉后要尽快重建以免胜利条件落后。</li>}
         </ul>
       </section>
 

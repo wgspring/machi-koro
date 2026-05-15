@@ -90,6 +90,17 @@ body { overflow: hidden; }
   color: #8a6d00;
   font-weight: 700;
 }
+.phase--wait {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+  border: 1px dashed #f59e0b;
+  animation: phase-pulse 1.6s ease-in-out infinite;
+}
+@keyframes phase-pulse {
+  0%, 100% { background: #fef3c7; }
+  50% { background: #fde68a; }
+}
 
 /* ============ 主体三列 ============ */
 .board__body {
@@ -182,5 +193,6 @@ body { overflow: hidden; }
   .board__topActions button { background: #2a2f3a; color: #eee; border-color: #444b58; }
   .phase { background: #1c2028; color: #eee; }
   .phase--win { background: #3a2e10; color: #ffe08a; }
+  .phase--wait { background: #3a2e10; color: #fcd34d; border-color: #f59e0b; }
   .modal__inner { background: #14171c; }
 }

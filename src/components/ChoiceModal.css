@@ -1,0 +1,211 @@
+/* ============================================================
+ * ChoiceModal.css — 百万富翁扩展选择弹窗样式
+ * ========================================================== */
+
+.cm__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: cm-fade-in 0.18s ease-out;
+  padding: 20px;
+}
+
+@keyframes cm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cm-pop-in {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.cm__modal {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  padding: 24px 28px;
+  max-width: 720px;
+  width: 100%;
+  max-height: 86vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  animation: cm-pop-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border-top: 6px solid #64748b;
+}
+
+.cm__modal--demolish { border-top-color: #ef4444; }
+.cm__modal--moving   { border-top-color: #3b82f6; }
+.cm__modal--reno     { border-top-color: #f97316; }
+.cm__modal--exhibit  { border-top-color: #a855f7; }
+.cm__modal--tech     { border-top-color: #14b8a6; }
+
+.cm__modal h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.cm__hint {
+  margin: 0 0 18px 0;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+  padding: 10px 14px;
+  background: #f1f5f9;
+  border-left: 3px solid #94a3b8;
+  border-radius: 6px;
+}
+
+.cm__hint strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ---------- 列表 ---------- */
+.cm__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cm__list--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- 按钮 ---------- */
+.cm__btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cm__btn {
+  cursor: pointer;
+  border: 2px solid #cbd5e1;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.cm__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
+  border-color: #64748b;
+}
+
+.cm__btn:active {
+  transform: translateY(0);
+}
+
+.cm__btnTitle {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.cm__btnMeta {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.cm__btnDesc {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+/* ---------- 卡牌颜色 ---------- */
+.cm__btn--landmark {
+  border-color: #fca5a5;
+  background: linear-gradient(180deg, #fff 0%, #fef2f2 100%);
+}
+.cm__btn--landmark:hover { border-color: #ef4444; }
+
+.cm__btn--blue {
+  border-color: #93c5fd;
+  background: linear-gradient(180deg, #fff 0%, #eff6ff 100%);
+}
+.cm__btn--blue:hover { border-color: #3b82f6; }
+
+.cm__btn--green {
+  border-color: #86efac;
+  background: linear-gradient(180deg, #fff 0%, #f0fdf4 100%);
+}
+.cm__btn--green:hover { border-color: #22c55e; }
+
+.cm__btn--red {
+  border-color: #fca5a5;
+  background: linear-gradient(180deg, #fff 0%, #fef2f2 100%);
+}
+.cm__btn--red:hover { border-color: #ef4444; }
+
+.cm__btn--purple {
+  border-color: #d8b4fe;
+  background: linear-gradient(180deg, #fff 0%, #faf5ff 100%);
+}
+.cm__btn--purple:hover { border-color: #a855f7; }
+
+/* ---------- 二选一(科技公司)---------- */
+.cm__btn--yes,
+.cm__btn--no {
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 14px 18px;
+}
+
+.cm__btn--yes {
+  border-color: #5eead4;
+  background: linear-gradient(180deg, #ccfbf1 0%, #99f6e4 100%);
+  color: #115e59;
+}
+.cm__btn--yes:hover {
+  border-color: #14b8a6;
+  background: linear-gradient(180deg, #99f6e4 0%, #5eead4 100%);
+}
+
+.cm__btn--no {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+.cm__btn--no:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 600px) {
+  .cm__modal {
+    padding: 18px 16px;
+  }
+  .cm__modal h3 {
+    font-size: 17px;
+  }
+  .cm__list--grid {
+    grid-template-columns: 1fr;
+  }
+  .cm__btns {
+    flex-direction: column;
+  }
+}

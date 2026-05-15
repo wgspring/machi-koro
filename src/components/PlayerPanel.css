@@ -227,6 +227,21 @@
   font-size: .68rem;
 }
 .pp__count { font-weight: 700; }
+.pp__count--tech {
+  background: rgba(99, 102, 241, .25);
+  color: #6366f1;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: .68rem;
+}
+.pp__count--off {
+  background: rgba(148, 163, 184, .25);
+  color: #64748b;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: .68rem;
+}
+.pp__bld--off { opacity: .55; text-decoration: line-through; }
 .pp__empty {
   color: #aaa;
   font-size: .8rem;

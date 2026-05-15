@@ -11,10 +11,17 @@ export interface PlayerState {
   id: 0 | 1;
   name: string;
   coins: number;
-  /** 已拥有的建筑:卡牌 id -> 数量 */
+  /** 已拥有的建筑:卡牌 id -> 数量(包含被翻面停用的) */
   buildings: Record<string, number>;
   /** 已建成的地标 id 集合(含默认建成的 city_hall / harbor) */
   landmarks: Record<string, boolean>;
+  /** 百万富翁 · 翻面停用的建筑张数:卡牌 id -> 被停用的张数(<= buildings[id])
+   *  - 葡萄酒庄触发后该卡所有张数永久翻面停用
+   *  - 装修公司触发后,被指定的某种卡在所有玩家处全员翻面停用,直到本卡再次触发解除
+   *  - 翻面停用的卡:不被符号统计计入、不触发收益、但仍占据建筑数 */
+  disabled?: Record<string, number>;
+  /** 百万富翁 · 科技公司累计投资标记数 */
+  techMarkers?: number;
 }
 
 export interface DiceResult {
@@ -79,9 +86,30 @@ export interface GameState {
   /** 本回合是否已建造 */
   builtThisTurn: boolean;
   winner: 0 | 1 | null;
+  /** 百万富翁 · 装修公司当前在全局锁定的卡 id(对所有玩家生效);null = 无锁定 */
+  renovationLockedKind?: string | null;
+  /** 百万富翁 · 待用户决策的项(resolve 阶段产生,逐项决完后才进入 build) */
+  pendingChoices?: PendingChoice[];
+  /** 百万富翁 · 玩家累计决策(逐项填入,最终传给 computeIncomeBreakdown) */
+  _resolvedChoices?: import('./engine').ResolveChoices;
   log: LogEntry[];
   _logSeq: number;
 }
+
+/**
+ * 待用户决策项(百万富翁扩展所需)
+ *  - demolish      :拆迁公司,主动玩家选择拆掉自己哪一座地标(可拆 N 次)
+ *  - moving        :搬家公司,主动玩家选择送给对手哪张非紫卡(可送 N 次)
+ *  - renovation    :装修公司,主动玩家选择锁定对手的哪种非紫卡
+ *  - exhibit       :会展中心,主动玩家选择对对手哪种非紫卡收税
+ *  - tech          :科技公司,主动玩家选择"放标记"还是"不放"
+ */
+export type PendingChoice =
+  | { kind: 'demolish'; playerId: 0 | 1; options: string[] /* landmark ids */ }
+  | { kind: 'moving'; playerId: 0 | 1; options: string[] /* building ids */ }
+  | { kind: 'renovation'; playerId: 0 | 1; options: string[] /* building ids */ }
+  | { kind: 'exhibit'; playerId: 0 | 1; options: string[] /* building ids */ }
+  | { kind: 'tech'; playerId: 0 | 1 /* yes / no 选择 */ };
 
 export interface CatalogIndex {
   byId: Record<string, BuildingCard>;

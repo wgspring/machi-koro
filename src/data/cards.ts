@@ -1,31 +1,38 @@
 /**
  * 《骰子街》卡牌数据
- *   - 'base'   : 2012 基础版(15 种建筑 + 4 座地标)
- *   - 'harbor' : 2016 Bright Lights, Big City 合订版(港扩重制版,10 堆市场)
+ *   - 'base'        : 2012 基础版(15 种建筑 + 4 座地标)
+ *   - 'harbor'      : 2016 Bright Lights, Big City 合订版(港扩重制版,10 堆市场)
+ *   - 'millionaire' : 2016 Millionaire's Row 百万富翁(基础 + 14 张新卡 + 公园)
+ *   - 'all'         : 三合一(基础 + 港口 + 百万富翁)
  *
  * 用于游戏逻辑实现与 UI 展示的单一数据源 (Single Source of Truth)
  */
 
 export type CardColor = 'blue' | 'green' | 'red' | 'purple';
 
-/** 游戏模式:基础版 / Bright Lights 合订版 */
-export type GameMode = 'base' | 'harbor';
+/** 游戏模式 */
+export type GameMode = 'base' | 'harbor' | 'millionaire' | 'all';
+
+/** 一张卡所属的"扩展归属"(决定它在哪些 GameMode 下可用) */
+export type CardOrigin = 'base' | 'harbor' | 'millionaire';
 
 /**
  * 港扩里部分卡牌带"图标分类",作为其它卡的加成判定依据。
- *  - cup    ☕ 餐饮:咖啡馆、家庭餐厅、披萨店、汉堡店、寿司店
- *  - bread  🥐 面包(房屋型 🏠):面包店、便利店、花店
- *  - factory🏭 工厂:起司工厂、家具工厂、食品仓库
+ *  - cup    ☕ 餐饮:咖啡馆、家庭餐厅、披萨店、汉堡店、寿司店、法国餐厅、会员俱乐部
+ *  - bread  🥐 面包(房屋型 🏠):面包店、便利店、花店、杂货店
+ *  - factory🏭 工厂:起司工厂、家具工厂、食品仓库、葡萄酒庄、饮料工厂
  *  - fruit  🍎 水果:苹果园、葡萄园、蔬果市场
  *  - fish   🐟 鱼:鲭鱼船、金枪鱼船
- *  - wheat  🌾 麦穗:麦田、苹果园、花田
+ *  - wheat  🌾 麦穗:麦田、苹果园、花田、玉米田、葡萄园
  *  - cow    🐄 牛:牧场
  *  - gear   ⚙️ 齿轮:森林、矿山
- *  - major  🏢 大型(紫色)
+ *  - business 🏢 公司:拆迁公司、借贷公司、搬家公司
+ *  - major  🌆 大型(紫色)
  */
 export type CardSymbol =
   | 'wheat' | 'cow' | 'gear'
   | 'cup' | 'bread' | 'factory' | 'fruit' | 'fish'
+  | 'business'
   | 'major';
 
 export interface BuildingCard {
@@ -39,8 +46,8 @@ export interface BuildingCard {
   /** 公共卡池中的初始数量 */
   supply: number;
   symbol: CardSymbol;
-  /** 卡牌所属模式 */
-  mode: 'base' | 'harbor';
+  /** 卡牌所属扩展(决定它在哪些 GameMode 下可用) */
+  mode: CardOrigin;
   /** 是否需要"港口"才能生效(Bright Lights 中港口默认建成,但保留字段以便规则书展示) */
   requiresHarbor?: boolean;
 }
@@ -50,8 +57,8 @@ export interface LandmarkCard {
   name: string;
   cost: number;
   description: string;
-  mode: 'base' | 'harbor';
-  /** Bright Lights:市政厅 / 港口默认建成,不算入"需要建造"的胜利目标 */
+  mode: CardOrigin;
+  /** Bright Lights / Millionaire's Row:部分地标默认建成,不算入"需要建造"的胜利目标 */
   builtByDefault?: boolean;
   /** 隐形地标:不在玩家面板地标格子中显示(只显示效果说明在规则页) */
   hidden?: boolean;
@@ -89,6 +96,22 @@ const HARBOR_DEFAULT_LANDMARKS: LandmarkCard[] = [
     cost: 0,
     description: '掷出 ≥10 时,可选择给点数 +2(仅双骰)',
     mode: 'harbor',
+    builtByDefault: true,
+    hidden: false,
+  },
+];
+
+/**
+ * Millionaire's Row(百万富翁)单独模式:启用市政厅以契合 10 种市场和"低钱保护"
+ * 三合一模式直接复用 HARBOR_DEFAULT_LANDMARKS(已包含市政厅)
+ */
+const MILLIONAIRE_DEFAULT_LANDMARKS: LandmarkCard[] = [
+  {
+    id: 'city_hall',
+    name: '市政厅',
+    cost: 0,
+    description: '建造阶段开始时,若你的金币 <1,自动补到 1 币',
+    mode: 'millionaire',
     builtByDefault: true,
     hidden: false,
   },
@@ -152,24 +175,90 @@ const HARBOR_BUILDINGS: BuildingCard[] = [
   { id: 'tax_office',    name: '税务局',   color: 'purple',activation: [8,9],   cost: 4, supply: 4, description: '从每个 ≥10 币的对手处拿走其一半(向下取整)',  symbol: 'major', mode: 'harbor' },
 ];
 
-/** 全部建筑(基础 + 港口) — 仅供 CATALOG 索引;实际可购卡牌请走 getBuildings(mode) */
-export const BUILDINGS: BuildingCard[] = [...BASE_BUILDINGS, ...HARBOR_BUILDINGS];
+/**
+ * Millionaire's Row(2016 百万富翁街/百万富翁之路)新增建筑(14 张)
+ * 与基础 / 港扩共用「10 种统一市场」机制。
+ *
+ * 特殊机制说明:
+ *  - 拆迁公司:自己骰 4 触发,自动拆掉 1 座地标(若有可拆),银行付 8 币
+ *  - 借贷公司:购买时 cost=-5(银行付你 5 币);自己骰 5-6 时,付每位对手 2 币
+ *  - 葡萄酒庄:触发后**永久翻面停用**(不可恢复)
+ *  - 装修公司:触发后令"被指定的那种建筑"对**所有玩家**翻面停用,直到此卡再次被触发
+ *  - 科技公司:每次触发可自愿放 1 个投资标记;别人骰特定点时按累计标记数 ×1 抽取
+ *  - 玉米田 / 杂货店:仅在你尚有 ≤2 / ≤1 地标时生效
+ *  - 法国餐厅 / 会员俱乐部:仅当对方已建 ≥2 / ≥3 地标时生效
+ *  - 公园:作为紫色大型建筑(非地标),自己骰 11-13 触发,所有玩家金币重新均分(向上取整)
+ */
+const MILLIONAIRE_BUILDINGS: BuildingCard[] = [
+  // 🟦 蓝色
+  { id: 'corn_field',    name: '玉米田',   color: 'blue',  activation: [3, 4],  cost: 3, supply: 6, description: '+1 币(仅在你 ≤2 地标时)',                              symbol: 'wheat',    mode: 'millionaire' },
+  { id: 'vineyard',      name: '葡萄园',   color: 'blue',  activation: [7],     cost: 3, supply: 6, description: '+3 币',                                                  symbol: 'wheat',    mode: 'millionaire' },
+
+  // 🟥 红色
+  { id: 'french_rest',   name: '法国餐厅', color: 'red',   activation: [5],     cost: 3, supply: 6, description: '从掷骰者抢 5 币(对方需 ≥2 地标;购物中心 +1)',          symbol: 'cup',      mode: 'millionaire' },
+  { id: 'members_club',  name: '会员俱乐部', color: 'red', activation: [12,13,14], cost: 4, supply: 6, description: '抢光对方所有钱(对方需 ≥3 地标;购物中心 +1)',         symbol: 'cup',      mode: 'millionaire' },
+
+  // 🟩 绿色
+  { id: 'general_store', name: '杂货店',   color: 'green', activation: [2],     cost: 0, supply: 6, description: '+2 币(仅在你 ≤1 地标时;购物中心 +1)',                  symbol: 'bread',    mode: 'millionaire' },
+  { id: 'demolition',    name: '拆迁公司', color: 'green', activation: [4],     cost: 2, supply: 6, description: '强制拆掉 1 座自己的地标,银行支付 8 币',                  symbol: 'business', mode: 'millionaire' },
+  { id: 'loan_office',   name: '借贷公司', color: 'green', activation: [5, 6],  cost: -5, supply: 6, description: '购买时获得 5 币;之后骰 5-6,付每位对手 2 币',           symbol: 'business', mode: 'millionaire' },
+  { id: 'winery',        name: '葡萄酒庄', color: 'green', activation: [9],     cost: 3, supply: 6, description: '每张葡萄园 +6 币;触发后此卡永久翻面停用',                symbol: 'factory',  mode: 'millionaire' },
+  { id: 'moving_co',     name: '搬家公司', color: 'green', activation: [9, 10], cost: 2, supply: 6, description: '送一张自己的非紫色建筑给指定对手,然后从他处拿 4 币',     symbol: 'business', mode: 'millionaire' },
+  { id: 'soda_factory',  name: '饮料工厂', color: 'green', activation: [11],    cost: 5, supply: 6, description: '所有玩家每张 ☕ 杯型建筑 +1 币',                          symbol: 'factory',  mode: 'millionaire' },
+
+  // 🟪 紫色 · 大型(每位玩家上限 1 张)
+  { id: 'renovation',    name: '装修公司', color: 'purple',activation: [8],     cost: 4, supply: 4, description: '指定对手某种非紫色建筑,从所有持有者收 8 币/张;该种全员翻面停用,直到本卡再次触发', symbol: 'major', mode: 'millionaire' },
+  { id: 'tech_startup',  name: '科技公司', color: 'purple',activation: [10],    cost: 1, supply: 4, description: '可自愿在此卡上放 1 个投资标记;别人骰 10 时,按累计标记数 ×1 从掷骰者抽取',     symbol: 'major', mode: 'millionaire' },
+  { id: 'exhibit_hall',  name: '会展中心', color: 'purple',activation: [11, 12], cost: 8, supply: 4, description: '指定对手,按其某种非紫色建筑张数 ×4 币抽取',                              symbol: 'major', mode: 'millionaire' },
+  { id: 'park',          name: '公园',     color: 'purple',activation: [11, 12, 13], cost: 3, supply: 4, description: '所有玩家金币重新均分(向上取整)',                                  symbol: 'major', mode: 'millionaire' },
+];
+
+/** 全部建筑(基础 + 港口 + 百万富翁) — 仅供 CATALOG 索引;实际可购卡牌请走 getBuildings(mode) */
+export const BUILDINGS: BuildingCard[] = [...BASE_BUILDINGS, ...HARBOR_BUILDINGS, ...MILLIONAIRE_BUILDINGS];
 
 /** 按模式获取可用建筑 */
 export function getBuildings(mode: GameMode): BuildingCard[] {
-  if (mode === 'base') return BASE_BUILDINGS;
-  return [...BASE_BUILDINGS, ...HARBOR_BUILDINGS];
+  switch (mode) {
+    case 'base':        return BASE_BUILDINGS;
+    case 'harbor':      return [...BASE_BUILDINGS, ...HARBOR_BUILDINGS];
+    case 'millionaire': return [...BASE_BUILDINGS, ...MILLIONAIRE_BUILDINGS];
+    case 'all':         return [...BASE_BUILDINGS, ...HARBOR_BUILDINGS, ...MILLIONAIRE_BUILDINGS];
+  }
 }
 
 /** 按模式获取地标 */
 export function getLandmarks(mode: GameMode): LandmarkCard[] {
-  if (mode === 'base') return BASE_LANDMARKS;
-  return [...BASE_LANDMARKS, ...HARBOR_DEFAULT_LANDMARKS];
+  switch (mode) {
+    case 'base':        return BASE_LANDMARKS;
+    case 'harbor':      return [...BASE_LANDMARKS, ...HARBOR_DEFAULT_LANDMARKS];
+    case 'millionaire': return [...BASE_LANDMARKS, ...MILLIONAIRE_DEFAULT_LANDMARKS];
+    case 'all':         return [...BASE_LANDMARKS, ...HARBOR_DEFAULT_LANDMARKS];
+  }
 }
 
 /** 按模式获取需要"购买"的地标(用于胜利判定) — Bright Lights 仍是 4 座 */
 export function getBuyableLandmarks(mode: GameMode): LandmarkCard[] {
   return getLandmarks(mode).filter((l) => !l.builtByDefault);
+}
+
+/** 是否启用 Bright Lights 共通机制(10 种市场 + 市政厅) */
+export function usesHarborMechanics(mode: GameMode): boolean {
+  return mode === 'harbor' || mode === 'all' || mode === 'millionaire';
+}
+
+/** 是否默认建成"港口"地标(港口 +2 加成、鱼船触发) — 仅 harbor / all */
+export function hasHarborLandmark(mode: GameMode): boolean {
+  return mode === 'harbor' || mode === 'all';
+}
+
+/** 是否启用百万富翁卡牌池 */
+export function usesMillionaireCards(mode: GameMode): boolean {
+  return mode === 'millionaire' || mode === 'all';
+}
+
+/** 是否启用 10 种统一市场(港扩同款发牌机制)— 所有非基础模式都启用 */
+export function usesUnifiedMarket(mode: GameMode): boolean {
+  return mode !== 'base';
 }
 
 /* -------------------------------------------------------------------------- */

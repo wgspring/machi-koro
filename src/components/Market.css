@@ -305,6 +305,62 @@
   }
 }
 
+/* 百万富翁徽标 */
+.card__modeBadge--mil {
+  background: #fde7d3;
+  color: #b04300;
+  border-color: #ffb88a;
+}
+@media (prefers-color-scheme: dark) {
+  .card__modeBadge--mil {
+    background: #3b2210;
+    color: #ffb16e;
+    border-color: #6c3a18;
+  }
+}
+
+/* 装修锁定徽标 */
+.card__modeBadge--lock {
+  background: #ffe1e1;
+  color: #b81a1a;
+  border-color: #ff9999;
+}
+@media (prefers-color-scheme: dark) {
+  .card__modeBadge--lock {
+    background: #3a1010;
+    color: #ff7878;
+    border-color: #6c2a2a;
+  }
+}
+
+/* 装修锁定整张卡牌的样式 */
+.card--locked {
+  opacity: .5;
+  filter: grayscale(.6);
+  position: relative;
+}
+.card--locked::after {
+  content: '🛠️ 装修锁定';
+  position: absolute;
+  inset: auto 0 50% 0;
+  text-align: center;
+  font-size: .85rem;
+  font-weight: 700;
+  color: #b81a1a;
+  background: rgba(255, 225, 225, .92);
+  padding: 4px 8px;
+  border-top: 1px dashed #b81a1a;
+  border-bottom: 1px dashed #b81a1a;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .card--locked::after {
+    color: #ff8a8a;
+    background: rgba(60, 16, 16, .92);
+    border-color: #ff8a8a;
+  }
+}
+
 
 /* ─────────────────────────── 新补卡闪光提示 ─────────────────────────── */
 /*

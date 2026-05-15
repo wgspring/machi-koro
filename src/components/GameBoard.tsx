@@ -7,6 +7,7 @@ import LogPanel from './LogPanel';
 import Rules from './Rules';
 import Confetti from './Confetti';
 import WinModal from './WinModal';
+import ChoiceModal from './ChoiceModal';
 import type { GameMode } from '../data/types';
 import './GameBoard.css';
 
@@ -16,6 +17,23 @@ function PhaseHint() {
   if (state.phase === 'gameover') {
     const win = state.players[state.winner!];
     return <div className="phase phase--win">🏆 {win.name} 获胜!</div>;
+  }
+  // 优先提示等待选择
+  if (state.pendingChoices && state.pendingChoices.length > 0) {
+    const head = state.pendingChoices[0];
+    const who = state.players[head.playerId].name;
+    const kindLabel: Record<string, string> = {
+      demolish: '🚧 拆迁公司:选择地标',
+      moving: '🏢 搬家公司:选择卡牌',
+      renovation: '🛠️ 装修公司:选择锁定卡牌',
+      exhibit: '🏟️ 会展中心:选择收税卡牌',
+      tech: '💻 科技公司:是否放置标记',
+    };
+    return (
+      <div className="phase phase--wait">
+        <strong>第 {state.turn} 回合</strong> · 等待 {who}{kindLabel[head.kind] ?? '做出选择'}
+      </div>
+    );
   }
   const hint =
     state.phase === 'roll'
@@ -40,7 +58,11 @@ function GameBoardInner({
   onBackToStart: () => void;
 }) {
   const { state, dispatch } = useGame();
-  const modeLabel = state.mode === 'harbor' ? 'Bright Lights 合订版' : '基础版';
+  const modeLabel =
+    state.mode === 'harbor' ? 'Bright Lights 合订版'
+    : state.mode === 'millionaire' ? '仅百万富翁扩展'
+    : state.mode === 'all' ? '三合一(基础+港口+百万富翁)'
+    : '基础版';
 
   // 胜利弹窗:游戏结束时打开,用户点 ✕ / "关闭" 才停;新一局或返回首页时复位
   const [winDismissed, setWinDismissed] = useState(false);
@@ -101,6 +123,9 @@ function GameBoardInner({
           onClose={() => setWinDismissed(true)}
         />
       )}
+
+      {/* 百万富翁扩展:resolve 阶段需玩家选择时弹出 */}
+      <ChoiceModal />
     </div>
   );
 }

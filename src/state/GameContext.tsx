@@ -4,6 +4,7 @@ import {
   rollDice,
   rerollDice,
   resolveIncome,
+  submitChoice,
   buyBuilding,
   buyLandmark,
   skipBuild,
@@ -11,12 +12,20 @@ import {
 } from '../data/engine';
 import type { GameState, GameMode } from '../data/types';
 
+type ChoicePayload =
+  | { kind: 'demolish'; landmarkId: string }
+  | { kind: 'moving'; buildingId: string }
+  | { kind: 'renovation'; buildingId: string }
+  | { kind: 'exhibit'; buildingId: string }
+  | { kind: 'tech'; place: boolean };
+
 type Action =
   | { type: 'RESTART'; name1?: string; name2?: string; mode?: GameMode }
   | { type: 'ROLL'; count: 1 | 2; forced?: { d1?: number; d2?: number } }
   | { type: 'REROLL'; forced?: { d1?: number; d2?: number } }
   | { type: 'HARBOR_BOOST'; accept: boolean }
   | { type: 'RESOLVE' }
+  | { type: 'RESOLVE_CHOICE'; payload: ChoicePayload }
   | { type: 'BUY_BUILDING'; cardId: string }
   | { type: 'BUY_LANDMARK'; landmarkId: string }
   | { type: 'SKIP_BUILD' };
@@ -28,6 +37,7 @@ function reducer(state: GameState, action: Action): GameState {
     case 'REROLL': return rerollDice(state, action.forced);
     case 'HARBOR_BOOST': return applyHarborBoost(state, action.accept);
     case 'RESOLVE': return resolveIncome(state);
+    case 'RESOLVE_CHOICE': return submitChoice(state, action.payload);
     case 'BUY_BUILDING': return buyBuilding(state, action.cardId);
     case 'BUY_LANDMARK': return buyLandmark(state, action.landmarkId);
     case 'SKIP_BUILD': return skipBuild(state);

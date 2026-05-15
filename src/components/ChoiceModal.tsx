@@ -1,0 +1,177 @@
+import { useGame } from '../state/GameContext';
+import { CATALOG } from '../data/engine';
+import './ChoiceModal.css';
+
+/**
+ * 百万富翁扩展:resolve 阶段需要玩家选择时弹出的模态框
+ * 根据 state.pendingChoices[0] 渲染对应交互
+ */
+export default function ChoiceModal() {
+  const { state, dispatch } = useGame();
+  const pending = state.pendingChoices;
+  if (!pending || pending.length === 0) return null;
+  const head = pending[0];
+  const me = state.players[head.playerId];
+  const myName = me.name;
+
+  // 进度提示(同种选择多次时显示 "1/N")
+  const sameKindTotal = pending.filter((c) => c.kind === head.kind).length;
+  const allKindCount = (() => {
+    // 总数 = 当前队列 + 已经在 resolved 里的同类
+    const rc = state._resolvedChoices ?? {};
+    if (head.kind === 'demolish') return sameKindTotal + (rc.demolishLandmarkIds?.length ?? 0);
+    if (head.kind === 'moving') return sameKindTotal + (rc.movingGiveIds?.length ?? 0);
+    return 1;
+  })();
+  const doneCount = allKindCount - sameKindTotal;
+
+  /* ------------------------- 拆迁公司:选地标 ------------------------- */
+  if (head.kind === 'demolish') {
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--demolish">
+          <h3>🚧 拆迁公司 · {myName} 请选择要拆除的地标</h3>
+          <p className="cm__hint">银行将支付你 8 币 / 座 · 进度 {doneCount + 1}/{allKindCount}</p>
+          <div className="cm__list">
+            {head.options.map((id) => {
+              const lm = CATALOG.landmarkById[id];
+              if (!lm) return null;
+              return (
+                <button
+                  key={id}
+                  className="cm__btn cm__btn--landmark"
+                  onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'demolish', landmarkId: id } })}
+                >
+                  <span className="cm__btnTitle">{lm.name}</span>
+                  <span className="cm__btnMeta">造价 {lm.cost} 币</span>
+                  <span className="cm__btnDesc">{lm.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------- 搬家公司:选送出哪张非紫卡 ------------------------- */
+  if (head.kind === 'moving') {
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--moving">
+          <h3>🏢 搬家公司 · {myName} 请选择要送出的卡牌</h3>
+          <p className="cm__hint">送出后从对手处获得 4 币 · 进度 {doneCount + 1}/{allKindCount}</p>
+          <div className="cm__list cm__list--grid">
+            {head.options.map((id) => {
+              const c = CATALOG.byId[id];
+              if (!c) return null;
+              return (
+                <button
+                  key={id}
+                  className={`cm__btn cm__btn--card cm__btn--${c.color}`}
+                  onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'moving', buildingId: id } })}
+                >
+                  <span className="cm__btnTitle">{c.name}</span>
+                  <span className="cm__btnMeta">{c.color === 'blue' ? '🟦' : c.color === 'green' ? '🟩' : '🟥'} · 成本 {c.cost} 币 · 你有 {me.buildings[id] ?? 0} 张</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------- 装修公司:选锁定对手哪种卡 ------------------------- */
+  if (head.kind === 'renovation') {
+    const opp = state.players[head.playerId === 0 ? 1 : 0];
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--reno">
+          <h3>🛠️ 装修公司 · {myName} 请选择要锁定的对手卡牌</h3>
+          <p className="cm__hint">对手每张该卡支付你 8 币,此后该卡<strong>全场停用</strong>(直到再次触发)</p>
+          <div className="cm__list cm__list--grid">
+            {head.options.map((id) => {
+              const c = CATALOG.byId[id];
+              if (!c) return null;
+              const n = opp.buildings[id] ?? 0;
+              return (
+                <button
+                  key={id}
+                  className={`cm__btn cm__btn--card cm__btn--${c.color}`}
+                  onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'renovation', buildingId: id } })}
+                >
+                  <span className="cm__btnTitle">{c.name}</span>
+                  <span className="cm__btnMeta">对手 ×{n} · 收税 {n * 8} 币</span>
+                  <span className="cm__btnDesc">{c.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------- 会展中心:选对手哪种卡收税 ------------------------- */
+  if (head.kind === 'exhibit') {
+    const opp = state.players[head.playerId === 0 ? 1 : 0];
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--exhibit">
+          <h3>🏟️ 会展中心 · {myName} 请选择对哪种对手卡收税</h3>
+          <p className="cm__hint">对手每张该卡支付你 4 币</p>
+          <div className="cm__list cm__list--grid">
+            {head.options.map((id) => {
+              const c = CATALOG.byId[id];
+              if (!c) return null;
+              const n = opp.buildings[id] ?? 0;
+              return (
+                <button
+                  key={id}
+                  className={`cm__btn cm__btn--card cm__btn--${c.color}`}
+                  onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'exhibit', buildingId: id } })}
+                >
+                  <span className="cm__btnTitle">{c.name}</span>
+                  <span className="cm__btnMeta">对手 ×{n} · 收税 {n * 4} 币</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------- 科技公司:放/不放标记 ------------------------- */
+  if (head.kind === 'tech') {
+    const cur = me.techMarkers ?? 0;
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--tech">
+          <h3>💻 科技公司 · {myName} 是否放置 1 个投资标记?</h3>
+          <p className="cm__hint">
+            当前已有 <strong>{cur}</strong> 个标记。
+            放置后:对手骰 10 时,你将按总标记数从对手处收钱;但本回合此卡不直接出钱。
+          </p>
+          <div className="cm__btns">
+            <button
+              className="cm__btn cm__btn--yes"
+              onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'tech', place: true } })}
+            >
+              ✅ 放置标记(共 {cur + 1} 个)
+            </button>
+            <button
+              className="cm__btn cm__btn--no"
+              onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'tech', place: false } })}
+            >
+              ❌ 跳过(保持 {cur} 个)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}

@@ -1,5 +1,5 @@
 import { useGame } from '../state/GameContext';
-import { getBuildings, MARKET_DISPLAY_KINDS, type BuildingCard, type CardColor } from '../data/cards';
+import { getBuildings, MARKET_DISPLAY_KINDS, usesUnifiedMarket, type BuildingCard, type CardColor } from '../data/cards';
 import { getBuildingArt } from '../data/cardArt';
 import { marketDisplayIds } from '../data/engine';
 import { SYMBOL_META } from '../data/symbols';
@@ -55,6 +55,7 @@ export default function Market() {
     if ((supply[id] ?? 0) <= 0) return false;
     if (me.coins < card.cost) return false;
     if (card.color === 'purple' && (me.buildings[id] ?? 0) >= 1) return false;
+    if (state.renovationLockedKind === id) return false;
     return true;
   };
 
@@ -62,16 +63,19 @@ export default function Market() {
     const left = supply[b.id] ?? 0;
     const enabled = canBuyBuilding(b.id);
     const harborWarn = b.requiresHarbor && !me.landmarks.harbor;
+    const renovLocked = state.renovationLockedKind === b.id;
     const isFresh = freshSet.has(b.id);
     const art = getBuildingArt(b.id);
     const sym = SYMBOL_META[b.symbol];
     return (
       <button
         key={b.id}
-        className={`card ${COLOR_CLASS[b.color]} ${harborWarn ? 'card--needHarbor' : ''} ${isFresh ? 'card--fresh' : ''}`}
+        className={`card ${COLOR_CLASS[b.color]} ${harborWarn ? 'card--needHarbor' : ''} ${isFresh ? 'card--fresh' : ''} ${renovLocked ? 'card--locked' : ''}`}
         disabled={!enabled}
         onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
-        title={`${sym.label} · ${b.description}${isFresh ? ' · 新补卡' : ''}`}
+        title={renovLocked
+          ? `🛠️ 装修公司全场锁定 · 暂不可购买`
+          : `${sym.label} · ${b.description}${isFresh ? ' · 新补卡' : ''}`}
         style={art ? { ['--card-art' as string]: `url("${art}")` } : undefined}
       >
         <div className="card__top">
@@ -81,7 +85,7 @@ export default function Market() {
             <span className="card__act">{fmtAct(b.activation)}</span>
           </div>
           <div className="card__desc">{b.description}</div>
-          {(b.mode === 'harbor' || b.requiresHarbor) && (
+          {(b.mode === 'harbor' || b.mode === 'millionaire' || b.requiresHarbor || renovLocked) && (
             <div className="card__tags">
               {b.requiresHarbor && (
                 <span className="card__needHarbor">⚓ 需港口</span>
@@ -89,21 +93,31 @@ export default function Market() {
               {b.mode === 'harbor' && (
                 <span className="card__modeBadge" title="Bright Lights 合订版">港扩</span>
               )}
+              {b.mode === 'millionaire' && (
+                <span className="card__modeBadge card__modeBadge--mil" title="百万富翁扩展">百扩</span>
+              )}
+              {renovLocked && (
+                <span className="card__modeBadge card__modeBadge--lock" title="装修公司全场锁定">🛠️ 装修锁定</span>
+              )}
             </div>
           )}
         </div>
         <div className="card__bottom">
           <span className="card__cost">{b.cost} 币</span>
-          <span className="card__supply">剩 {left}</span>
+          <span className="card__supply">剩 {left} 张</span>
         </div>
       </button>
     );
   };
 
-  /* ----------- Bright Lights 合订版:10 种统一市场 ------------- */
-  if (mode === 'harbor') {
+  /* ----------- 统一市场(harbor / millionaire / all):10 种共享市场 ------------- */
+  if (usesUnifiedMarket(mode)) {
     const ids = marketDisplayIds(state) as string[];
     const remaining = market ? market.deck.length : 0;
+    const titleSuffix =
+      mode === 'harbor' ? 'Bright Lights 合订版'
+      : mode === 'millionaire' ? '仅百万富翁扩展'
+      : '三合一(基础+港口+百万富翁)';
     // 按颜色 + 触发点排序,稳定布局
     const cards = ids
       .map(cardById)
@@ -118,7 +132,7 @@ export default function Market() {
     return (
       <div className="market">
         <div className="market__head">
-          <h3>市场 · Bright Lights 合订版</h3>
+          <h3>市场 · {titleSuffix}</h3>
           <span className="market__deckMeta">
             场上 {ids.length}/{MARKET_DISPLAY_KINDS} 种 · 牌库剩 {remaining} 张
           </span>

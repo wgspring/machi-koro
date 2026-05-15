@@ -14,7 +14,7 @@ const COLOR_CLASS = {
   purple: 'tag tag--purple',
 } as const;
 
-function BuildingList({ player }: { player: PlayerState }) {
+function BuildingList({ player, lockedKind }: { player: PlayerState; lockedKind: string | null | undefined }) {
   const owned = Object.entries(player.buildings)
     .filter(([, n]) => n > 0)
     .map(([id, n]) => ({ id, n, card: CATALOG.byId[id] }))
@@ -24,24 +24,36 @@ function BuildingList({ player }: { player: PlayerState }) {
   if (!owned.length) return <div className="pp__empty">暂无建筑</div>;
   return (
     <ul className="pp__buildings">
-      {owned.map(({ id, n, card }) => (
-        <li key={id} className={COLOR_CLASS[card.color]}>
-          <span className="pp__act">
-            {card.activation.length === 1
-              ? card.activation[0]
-              : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
-          </span>
-          <span
-            className="pp__icon"
-            aria-label={SYMBOL_META[card.symbol].label}
-            title={SYMBOL_META[card.symbol].label}
-          >
-            {SYMBOL_META[card.symbol].emoji}
-          </span>
-          <span className="pp__name">{card.name}</span>
-          {card.color !== 'purple' && n > 1 && <span className="pp__count">×{n}</span>}
-        </li>
-      ))}
+      {owned.map(({ id, n, card }) => {
+        const disabledCnt = player.disabled?.[id] ?? 0;
+        const renovLocked = lockedKind === id;
+        const tag = renovLocked
+          ? '🛠️ 装修锁定'
+          : disabledCnt > 0
+            ? `🔒 翻面 ${disabledCnt}/${n}`
+            : null;
+        const techCnt = id === 'tech_startup' ? (player.techMarkers ?? 0) : 0;
+        return (
+          <li key={id} className={`${COLOR_CLASS[card.color]} ${renovLocked || disabledCnt > 0 ? 'pp__bld--off' : ''}`}>
+            <span className="pp__act">
+              {card.activation.length === 1
+                ? card.activation[0]
+                : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
+            </span>
+            <span
+              className="pp__icon"
+              aria-label={SYMBOL_META[card.symbol].label}
+              title={SYMBOL_META[card.symbol].label}
+            >
+              {SYMBOL_META[card.symbol].emoji}
+            </span>
+            <span className="pp__name">{card.name}</span>
+            {card.color !== 'purple' && n > 1 && <span className="pp__count">×{n}</span>}
+            {techCnt > 0 && <span className="pp__count pp__count--tech" title="科技标记">💻×{techCnt}</span>}
+            {tag && <span className="pp__count pp__count--off">{tag}</span>}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -120,7 +132,7 @@ export default function PlayerPanel({ playerId }: { playerId: 0 | 1 }) {
       </section>
       <section className="pp__section pp__section--scroll">
         <h4>建筑</h4>
-        <BuildingList player={player} />
+        <BuildingList player={player} lockedKind={state.renovationLockedKind} />
       </section>
     </div>
   );
