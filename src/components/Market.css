@@ -216,26 +216,6 @@
   .card--purple { --card-icon-bg: #2c1c44; --card-icon-bd: #523580; }
 }
 
-/* ===== 港口扩展模式:8 列时卡片更紧凑 ===== */
-.card--needHarbor {
-  outline: 1px dashed #b07b00;
-  outline-offset: -2px;
-}
-.card__needHarbor {
-  font-size: .68rem;
-  color: #b07b00;
-  background: #fff5e0;
-  border: 1px solid #ffd99c;
-  border-radius: 4px;
-  padding: 1px 4px;
-  align-self: flex-start;
-  margin-top: 2px;
-  letter-spacing: 1px;
-}
-@media (prefers-color-scheme: dark) {
-  .card__needHarbor { color: #ffd071; background: #3a2e10; border-color: #6c5618; }
-}
-
 /* ===== Bright Lights 合订版:10 种统一市场(5 列 × 2 行) ===== */
 /* harbor 模式:卡片更高,网格上方留空 */
 .market__grid--harbor {
@@ -278,7 +258,6 @@
   margin-top: 2px;
 }
 /* 标签容器内的子标签去掉外边距,统一由 gap 控制 */
-.card__tags > .card__needHarbor,
 .card__tags > .card__modeBadge {
   margin-top: 0;
 }

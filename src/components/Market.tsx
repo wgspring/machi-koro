@@ -62,7 +62,6 @@ export default function Market() {
   const renderCard = (b: BuildingCard) => {
     const left = supply[b.id] ?? 0;
     const enabled = canBuyBuilding(b.id);
-    const harborWarn = b.requiresHarbor && !me.landmarks.harbor;
     const renovLocked = state.renovationLockedKind === b.id;
     const isFresh = freshSet.has(b.id);
     const art = getBuildingArt(b.id);
@@ -70,7 +69,7 @@ export default function Market() {
     return (
       <button
         key={b.id}
-        className={`card ${COLOR_CLASS[b.color]} ${harborWarn ? 'card--needHarbor' : ''} ${isFresh ? 'card--fresh' : ''} ${renovLocked ? 'card--locked' : ''}`}
+        className={`card ${COLOR_CLASS[b.color]} ${isFresh ? 'card--fresh' : ''} ${renovLocked ? 'card--locked' : ''}`}
         disabled={!enabled}
         onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
         title={renovLocked
@@ -85,11 +84,8 @@ export default function Market() {
             <span className="card__act">{fmtAct(b.activation)}</span>
           </div>
           <div className="card__desc">{b.description}</div>
-          {(b.mode === 'harbor' || b.mode === 'millionaire' || b.requiresHarbor || renovLocked) && (
+          {(b.mode === 'harbor' || b.mode === 'millionaire' || renovLocked) && (
             <div className="card__tags">
-              {b.requiresHarbor && (
-                <span className="card__needHarbor">⚓ 需港口</span>
-              )}
               {b.mode === 'harbor' && (
                 <span className="card__modeBadge" title="Bright Lights 合订版">港扩</span>
               )}

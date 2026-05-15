@@ -134,9 +134,12 @@ export default function Rules() {
                   <tr key={c.id}>
                     <td>
                       {c.name}
-                      {c.mode === 'harbor' && <span className="rules__tag">港扩</span>}
-                      {c.mode === 'millionaire' && <span className="rules__tag">百扩</span>}
-                      {c.requiresHarbor && <span className="rules__tag rules__tag--warn">⚓ 需港口</span>}
+                      {c.mode === 'harbor' && (
+                        <span className="rules__modeBadge" title="Bright Lights 合订版">港扩</span>
+                      )}
+                      {c.mode === 'millionaire' && (
+                        <span className="rules__modeBadge rules__modeBadge--mil" title="百万富翁扩展">百扩</span>
+                      )}
                     </td>
                     <td>{SYMBOL_META[c.symbol].full}</td>
                     <td>{fmtActivation(c.activation)}</td>
