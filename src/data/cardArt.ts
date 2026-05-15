@@ -33,6 +33,22 @@ import hamburger      from '../assets/cardbg/buildings/hamburger.webp';
 import publisher      from '../assets/cardbg/buildings/publisher.webp';
 import taxOffice      from '../assets/cardbg/buildings/tax_office.webp';
 
+// === 百万富翁扩展建筑 ===
+import cornField      from '../assets/cardbg/buildings/corn_field.webp';
+import vineyard       from '../assets/cardbg/buildings/vineyard.webp';
+import frenchRest     from '../assets/cardbg/buildings/french_rest.webp';
+import membersClub    from '../assets/cardbg/buildings/members_club.webp';
+import generalStore   from '../assets/cardbg/buildings/general_store.webp';
+import demolition     from '../assets/cardbg/buildings/demolition.webp';
+import loanOffice     from '../assets/cardbg/buildings/loan_office.webp';
+import winery         from '../assets/cardbg/buildings/winery.webp';
+import movingCo       from '../assets/cardbg/buildings/moving_co.webp';
+import sodaFactory    from '../assets/cardbg/buildings/soda_factory.webp';
+import renovation     from '../assets/cardbg/buildings/renovation.webp';
+import techStartup    from '../assets/cardbg/buildings/tech_startup.webp';
+import exhibitHall    from '../assets/cardbg/buildings/exhibit_hall.webp';
+import park           from '../assets/cardbg/buildings/park.webp';
+
 // === 基础版地标 ===
 import station        from '../assets/cardbg/landmarks/station.webp';
 import mall           from '../assets/cardbg/landmarks/mall.webp';
@@ -71,6 +87,21 @@ export const BUILDING_ART: Record<string, string> = {
   hamburger,
   publisher,
   tax_office: taxOffice,
+  // 百万富翁扩展
+  corn_field: cornField,
+  vineyard,
+  french_rest: frenchRest,
+  members_club: membersClub,
+  general_store: generalStore,
+  demolition,
+  loan_office: loanOffice,
+  winery,
+  moving_co: movingCo,
+  soda_factory: sodaFactory,
+  renovation,
+  tech_startup: techStartup,
+  exhibit_hall: exhibitHall,
+  park,
 };
 
 export const LANDMARK_ART: Record<string, string> = {
