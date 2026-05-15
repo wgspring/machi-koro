@@ -59,8 +59,12 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** 初始化 10 种统一市场:所有卡按 supply 入唯一牌库,洗牌后翻出前 10 种 */
-export function initMarket(mode: GameMode): MarketDecks | null {
+/** 初始化 10 种统一市场:所有卡按 supply 入唯一牌库,洗牌后翻出前 10 种;
+ *  此处会把 `supply[id]` 重置为该种在摊位上**实际堆叠的张数**(忠于原版桌游)。
+ *  超出 10 种以外的同名卡会留在 deck 里,等到摊位上这一摞被买光、该种类槽被新种类替换、
+ *  未来再次被翻到牌顶时才会重新出现。
+ */
+export function initMarket(mode: GameMode, supply: Record<string, number>): MarketDecks | null {
   if (mode !== 'harbor') return null;
   const cards = buildingsFor(mode);
   const deck: string[] = [];
@@ -69,25 +73,32 @@ export function initMarket(mode: GameMode): MarketDecks | null {
   }
   const shuffled = shuffle(deck);
   const displayed: string[] = [];
-  refillMarket(shuffled, displayed);
+  // harbor 模式:把 supply 全部清零,补牌时按"实际翻到的次数"累加
+  for (const card of cards) supply[card.id] = 0;
+  refillMarket(shuffled, displayed, supply);
   // 初始铺面不算"新补",避免开局每张都闪
   return { deck: shuffled, displayed, freshIds: [], freshSetTurn: -1 };
 }
 
-/** 翻牌补足到 MARKET_DISPLAY_KINDS 种(去重展示);重复的卡牌默默叠到对应 supply */
-function refillMarket(deck: string[], displayed: string[]): void {
+/** 翻牌补足到 MARKET_DISPLAY_KINDS 种;
+ *  从牌堆顶逐张翻:
+ *   - 若该 id 已在 displayed:不增加种类槽,但 supply[id] +1(同名堆叠);
+ *   - 若该 id 不在 displayed:加入 displayed 作为新种类,supply[id] +1。
+ *  循环直到种类数达到 10 或牌库翻空。
+ */
+function refillMarket(deck: string[], displayed: string[], supply: Record<string, number>): void {
   while (displayed.length < MARKET_DISPLAY_KINDS && deck.length > 0) {
     const top = deck.shift()!;
     if (!displayed.includes(top)) {
       displayed.push(top);
     }
-    // 若与已展示重复,则等同于"摸到现有堆叠的下一张",不增加种类。
-    // 重复的卡通过 supply 数量来表达"还能买多少张"。
+    supply[top] = (supply[top] ?? 0) + 1;
   }
 }
 
 /**
  * 在市场上"买掉"一张卡:
+ *  - 调用前 buyBuilding 已把 supply[cardId] -= 1;
  *  - 若 supply 已为 0,则从 displayed 移除该 id;
  *  - 然后从牌库顶部补到 10 种;
  *  - 把因补牌新增的 id 累加到 market.freshIds(用于 UI 闪光),已存在的不重复加入。
@@ -98,7 +109,7 @@ function takeFromMarket(market: MarketDecks, supply: Record<string, number>, car
     market.displayed = market.displayed.filter((x) => x !== cardId);
   }
   const before = new Set(market.displayed);
-  refillMarket(market.deck, market.displayed);
+  refillMarket(market.deck, market.displayed, supply);
   // 若 freshIds 仍是上一回合的旧值(回合切换还没把它清掉就又买卡了,理论上不应发生),
   // 这里直接用本回合覆盖,避免跨回合污染
   if (market.freshSetTurn !== turn) {
@@ -147,7 +158,7 @@ export function createInitialState(
     phase: 'roll',
     players: [makePlayer(0, name1, mode), makePlayer(1, name2, mode)],
     supply,
-    market: initMarket(mode),
+    market: initMarket(mode, supply),
     lastRoll: null,
     rerollUsedThisTurn: false,
     extraTurnPending: false,
