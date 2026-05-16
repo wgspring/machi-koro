@@ -351,25 +351,8 @@
  * 触发时机:harbor 模式购买后,市场补出之前没有的卡 id;
  * 取消时机:进入下一回合(engine.endTurnInternal 清空 freshIds)。
  *
- * 视觉组成:
- *   1) 金色描边 + 外发光呼吸
- *   2) 卡面斜向高光从左→右滑过,循环
+ * 视觉:卡面斜向高光从左→右滑过,循环(无金色描边/呼吸)。
  */
-@keyframes card-fresh-glow {
-  0%, 100% {
-    box-shadow:
-      0 0 0 2px rgba(255, 199, 64, 0.95),
-      0 0 14px 4px rgba(255, 199, 64, 0.55),
-      0 0 0 1px rgba(255, 255, 255, 0.85) inset;
-  }
-  50% {
-    box-shadow:
-      0 0 0 2px rgba(255, 215, 80, 1),
-      0 0 24px 8px rgba(255, 199, 64, 0.85),
-      0 0 0 1px rgba(255, 255, 255, 0.85) inset;
-  }
-}
-
 @keyframes card-fresh-shine {
   0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
   20%  { opacity: 1; }
@@ -377,12 +360,12 @@
   100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
 }
 
+/* 用 ::after 叠一层斜向高光,不影响已有 ::before(原本用作背景插画蒙层) */
 .card--fresh {
-  animation: card-fresh-glow 1.6s ease-in-out infinite;
-  border-radius: 10px; /* 与 box-shadow 描边匹配,避免方角割裂 */
+  /* 仅作为闪光定位锚点,无视觉样式 */
+  position: relative;
 }
 
-/* 用 ::after 叠一层斜向高光,不影响已有 ::before(原本用作背景插画蒙层) */
 .card--fresh::after {
   content: '';
   position: absolute;
@@ -404,13 +387,8 @@
 
 /* 尊重用户的"减少动画"系统设置 */
 @media (prefers-reduced-motion: reduce) {
-  .card--fresh,
   .card--fresh::after {
     animation: none;
-  }
-  .card--fresh {
-    box-shadow:
-      0 0 0 2px rgba(255, 199, 64, 0.95),
-      0 0 12px 3px rgba(255, 199, 64, 0.55);
+    opacity: 0;
   }
 }

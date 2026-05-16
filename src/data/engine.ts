@@ -438,8 +438,6 @@ export interface IncomeBreakdown {
     movingGiveIds?: string[];
     /** 装修公司:把哪些卡放入装修态 — 包含目标对手 id 与卡牌 id */
     renovationTarget?: { playerId: 0 | 1; buildingId: string };
-    /** 科技公司:本次自骰 10 后清零的累计标记数(等价于已抽走的金币数) */
-    techMarkersConsumed?: number;
     /** 公园:本次结算后,两人金币池均分 */
     parkRedistribute?: boolean;
     /** 会展中心:本次触发后,主动玩家手中 exhibit_hall -1,1 张放回市场 deck */
@@ -641,7 +639,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     else if (card.id === 'general_store') perCardBase = 2;
     // 百万富翁 · 葡萄酒庄:每张葡萄园 +6 币;触发后此卡进入装修态(在 resolve 中处理)
     else if (card.id === 'winery') perCardBase = 6 * countOf(me, 'vineyard');
-    // 百万富翁 · 饮料工厂:任何人骰 11,所有玩家每张 ☕杯型 +1 币(由"任何人触发"分支处理,这里不出钱)
+    // 百万富翁 · 饮料工厂:仅自己骰 11,从银行获得"全场杯型总数 × ownerCnt"金币(由下面专门分支处理,这里不出钱)
     else if (card.id === 'soda_factory') perCardBase = 0;
     // 百万富翁 · 拆迁公司 / 借贷公司 / 搬家公司:这些不走"标准 perCard × cnt" — 在下面专门处理
     else if (card.id === 'demolition' || card.id === 'loan_office' || card.id === 'moving_co') perCardBase = 0;
@@ -755,22 +753,16 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     });
     effects.movingGiveIds = (effects.movingGiveIds ?? []).concat(giveIds);
   }
-  // 饮料工厂(任何人骰 11):所有玩家每张 ☕杯型 +1 币
+  // 饮料工厂(自骰 11):仅主动玩家(掷骰者)结算,从银行获得 (全场所有玩家 ☕杯型总数) × ownerCnt 金币
   for (const card of cards) {
     if (card.id !== 'soda_factory' || !card.activation.includes(sum)) continue;
-    // 只要场上任何人拥有,就对全场生效;原版:每张饮料工厂触发一次"全场每张 ☕ +1"
-    for (const pid of [0, 1] as const) {
-      const ownerCnt = countOf(players[pid], card.id);
-      if (ownerCnt === 0) continue;
-      // 让"拥有者"按全场杯型数 × ownerCnt × 1 收益
-      // 其他玩家不会因此多得;但**其他玩家的杯型也算入计算源**(这是原版的 weird 之处)
-      // 简化:每张饮料工厂让该所有者按"全场所有玩家杯型总数 × 1"收益
-      const allCup = cupSymbolCount(state, players[0]) + cupSymbolCount(state, players[1]);
-      const gain = ownerCnt * allCup * 1;
-      if (gain > 0) {
-        coins[pid] += gain;
-        items[pid].push({ cardName: `${card.name}(全场 ☕×${allCup})`, count: ownerCnt, delta: gain, category: 'green' });
-      }
+    const ownerCnt = countOf(players[active], card.id);
+    if (ownerCnt === 0) continue;
+    const allCup = cupSymbolCount(state, players[0]) + cupSymbolCount(state, players[1]);
+    const gain = ownerCnt * allCup * 1;
+    if (gain > 0) {
+      coins[active] += gain;
+      items[active].push({ cardName: `${card.name}(全场 ☕×${allCup})`, count: ownerCnt, delta: gain, category: 'green' });
     }
   }
 
@@ -990,7 +982,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     }
   }
 
-  // 科技公司(自骰 10):**主动玩家**(active = 掷骰者)若持有此卡,从对手处收走累计 techMarkers 金币;techMarkers 清零(在 finalize 中处理)
+  // 科技公司(自骰 10):**主动玩家**(active = 掷骰者)若持有此卡,按累计 techMarkers 数从对手处收钱;**标记不清零**(每次自骰 10 都按当前累计数继续抽税,可叠加)
   {
     const techCard = cards.find((c) => c.id === 'tech_startup');
     if (techCard && techCard.activation.includes(sum)) {
@@ -1000,18 +992,18 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
         const got = tryTransfer(opponent, active, markers);
         if (got > 0) {
           items[active].push({
-            cardName: `${techCard.name}(回收 ${markers} 标记)`,
+            cardName: `${techCard.name}(累计 ${markers} 标记)`,
             count: cntT,
             delta: got,
             category: 'purple-coin',
           });
           items[opponent].push({
-            cardName: `被${techCard.name}收 ${markers} 币`,
+            cardName: `被${techCard.name}抽 ${markers} 币`,
             count: cntT,
             delta: -got,
             category: 'purple-coin',
           });
-          effects.techMarkersConsumed = markers;
+          // 不再清零 techMarkers
         }
       }
     }
@@ -1298,10 +1290,6 @@ function finalizeResolve(state: GameState): GameState {
         tp.underRenovation[bid] = already + add;
         pushLog(s, active, `🛠️ 装修公司:对手「${tp.name}」的「${CATALOG.byId[bid].name}」进入装修态 ×${add}`);
       }
-    }
-    if (eff.techMarkersConsumed && eff.techMarkersConsumed > 0) {
-      me.techMarkers = Math.max(0, (me.techMarkers ?? 0) - eff.techMarkersConsumed);
-      pushLog(s, active, `💻 科技公司:抽税后清空标记 (-${eff.techMarkersConsumed})`);
     }
     // 会展中心:每次触发消耗 1 张,放回市场卡库
     if (eff.exhibitConsumed && (me.buildings['exhibit_hall'] ?? 0) > 0) {

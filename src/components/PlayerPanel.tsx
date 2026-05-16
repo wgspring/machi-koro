@@ -39,8 +39,6 @@ function BuildingList({ player }: { player: PlayerState }) {
     .filter((x) => x.card) // 防御:跨模式下未识别卡牌
     .sort((a, b) => a.card.activation[0] - b.card.activation[0]);
 
-  if (!owned.length) return <div className="pp__empty">暂无建筑</div>;
-
   const hoverCard = hover ? CATALOG.byId[hover.id] : null;
   // 文本气泡尺寸估算
   const tipMaxW = 220;
@@ -82,6 +80,20 @@ function BuildingList({ player }: { player: PlayerState }) {
     el.style.setProperty('bottom', 'auto', 'important');
     el.style.setProperty('transform', 'none', 'important');
   }, [hover, tx, ty, placeLeft]);
+
+  // 当持有列表变化(如拆迁/搬家导致某张卡消失)时,若当前 hover 的卡已不存在,清掉 hover
+  useEffect(() => {
+    if (hover && !owned.some((o) => o.id === hover.id)) {
+      setHover(null);
+    }
+  }, [owned, hover]);
+
+  // 卸载时确保清理 hover(避免 portal 残留)
+  useEffect(() => {
+    return () => setHover(null);
+  }, []);
+
+  if (!owned.length) return <div className="pp__empty">暂无建筑</div>;
 
   return (
     <>

@@ -144,9 +144,9 @@ const BASE_BUILDINGS: BuildingCard[] = [
   { id: 'restaurant',    name: '家庭餐厅', color: 'red',   activation: [9,10],  cost: 3, supply: 6, description: '抢 2 币(购物中心 +1)',            symbol: 'cup',     mode: 'base' },
 
   // 🟪 紫色 · 大型设施(仅自己骰出时触发,每位玩家上限 1 张)
-  { id: 'stadium',       name: '体育馆',   color: 'purple',activation: [6],     cost: 6, supply: 4, description: '从所有其他玩家各抢 2 币',          symbol: 'major',   mode: 'base' },
-  { id: 'tv_station',    name: '电视台',   color: 'purple',activation: [6],     cost: 7, supply: 4, description: '指定一名玩家抢 5 币',              symbol: 'major',   mode: 'base' },
-  { id: 'business_ctr',  name: '商业中心', color: 'purple',activation: [6],     cost: 8, supply: 4, description: '与一名对手交换 2 张非紫卡',    symbol: 'major',   mode: 'base' },
+  { id: 'stadium',       name: '体育馆',   color: 'purple',activation: [6],     cost: 6, supply: 2, description: '从所有其他玩家各抢 2 币',          symbol: 'major',   mode: 'base' },
+  { id: 'tv_station',    name: '电视台',   color: 'purple',activation: [6],     cost: 7, supply: 2, description: '指定一名玩家抢 5 币',              symbol: 'major',   mode: 'base' },
+  { id: 'business_ctr',  name: '商业中心', color: 'purple',activation: [6],     cost: 8, supply: 2, description: '与一名对手交换 2 张非紫卡',    symbol: 'major',   mode: 'base' },
 ];
 
 /**
@@ -171,8 +171,8 @@ const HARBOR_BUILDINGS: BuildingCard[] = [
   { id: 'hamburger',     name: '汉堡店',   color: 'red',   activation: [8],     cost: 1, supply: 6, description: '抢 1 币(购物中心 +1)',                  symbol: 'cup',     mode: 'harbor' },
 
   // 🟪 紫色 · 港口扩展(每位玩家上限 1 张)
-  { id: 'publisher',     name: '出版社',   color: 'purple',activation: [7],     cost: 5, supply: 4, description: '对手每张 ☕ 杯型 + 🥐 面包型建筑各让你抢 1 币', symbol: 'major', mode: 'harbor' },
-  { id: 'tax_office',    name: '税务局',   color: 'purple',activation: [8,9],   cost: 4, supply: 4, description: '从每个 ≥10 币的对手处拿走其一半(向下取整)',  symbol: 'major', mode: 'harbor' },
+  { id: 'publisher',     name: '出版社',   color: 'purple',activation: [7],     cost: 5, supply: 2, description: '对手每张 ☕ 杯型 + 🥐 面包型建筑各让你抢 1 币', symbol: 'major', mode: 'harbor' },
+  { id: 'tax_office',    name: '税务局',   color: 'purple',activation: [8,9],   cost: 4, supply: 2, description: '从每个 ≥10 币的对手处拿走其一半(向下取整)',  symbol: 'major', mode: 'harbor' },
 ];
 
 /**
@@ -184,7 +184,7 @@ const HARBOR_BUILDINGS: BuildingCard[] = [
  *  - 借贷公司:购买时 cost=-5(银行付你 5 币);自己骰 5-6 时,付每位对手 2 币
  *  - 葡萄酒庄:触发后该玩家所有 winery **进入装修态**;
  *  - 装修公司:触发后令"被指定的那种建筑"在**该对手处**进入装修态;下次该卡触发点命中时,这些卡会自动恢复(那一次仍不结算)
- *  - 科技公司:每回合"自己回合"build 阶段中可主动投资 1 币(累计标记数);**自己** 骰 10 时,从对手处收走累计金币(然后清零)
+ *  - 科技公司:每回合"自己回合"build 阶段中可主动投资 1 币(累计标记数);**自己** 骰 10 时,按累计标记数从对手处收等额金币(标记保留)
  *  - 玉米田 / 杂货店:仅在你尚有 ≤2 / ≤1 地标时生效
  *  - 法国餐厅 / 会员俱乐部:仅当对方已建 ≥2 / ≥3 地标时生效
  *  - 公园:作为紫色大型建筑(非地标),自己骰 11-13 触发,所有玩家金币重新均分(向上取整)
@@ -204,13 +204,13 @@ const MILLIONAIRE_BUILDINGS: BuildingCard[] = [
   { id: 'loan_office',   name: '借贷公司', color: 'green', activation: [5, 6],  cost: -5, supply: 6, description: '购买时获得 5 币;之后骰 5-6,付每位对手 2 币',           symbol: 'business', mode: 'millionaire' },
   { id: 'winery',        name: '葡萄酒庄', color: 'green', activation: [9],     cost: 3, supply: 6, description: '每张葡萄园 +6 币;触发后此卡进入装修态,下次自己骰 9 时自动恢复(那一次仍不结算)',                symbol: 'factory',  mode: 'millionaire' },
   { id: 'moving_co',     name: '搬家公司', color: 'green', activation: [9, 10], cost: 2, supply: 6, description: '送一张自己的非紫色建筑给指定对手,然后从他处拿 4 币',     symbol: 'business', mode: 'millionaire' },
-  { id: 'soda_factory',  name: '饮料工厂', color: 'green', activation: [11],    cost: 5, supply: 6, description: '所有玩家每张 ☕ 杯型建筑 +1 币',                          symbol: 'factory',  mode: 'millionaire' },
+  { id: 'soda_factory',  name: '饮料工厂', color: 'green', activation: [11],    cost: 5, supply: 6, description: '自己骰 11 时,按全场所有玩家 ☕ 杯型建筑总数 ×1 币(自己每张饮料工厂触发一次)',                          symbol: 'factory',  mode: 'millionaire' },
 
   // 🟪 紫色 · 大型(每位玩家上限 1 张)
-  { id: 'renovation',    name: '装修公司', color: 'purple',activation: [8],     cost: 4, supply: 4, description: '指定一名对手的某种非紫色建筑,从该对手收 1 币/张;这些卡进入装修态,下次该卡触发点命中时自动恢复(那一次仍不结算)', symbol: 'major', mode: 'millionaire' },
-  { id: 'tech_startup',  name: '科技公司', color: 'purple',activation: [10],    cost: 1, supply: 4, description: '建成后每回合 build 阶段可花 1 币累计 1 个标记;自己骰 10 时,从对手处收走累计金币(然后清零)',     symbol: 'major', mode: 'millionaire' },
-  { id: 'exhibit_hall',  name: '会展中心', color: 'purple',activation: [10],     cost: 7, supply: 4, description: '激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库',                       symbol: 'major', mode: 'millionaire' },
-  { id: 'park',          name: '公园',     color: 'purple',activation: [11, 12, 13], cost: 3, supply: 4, description: '所有玩家金币重新均分(向上取整)',                                  symbol: 'major', mode: 'millionaire' },
+  { id: 'renovation',    name: '装修公司', color: 'purple',activation: [8],     cost: 4, supply: 2, description: '指定一名对手的某种非紫色建筑,从该对手收 1 币/张;这些卡进入装修态,下次该卡触发点命中时自动恢复(那一次仍不结算)', symbol: 'major', mode: 'millionaire' },
+  { id: 'tech_startup',  name: '科技公司', color: 'purple',activation: [10],    cost: 1, supply: 2, description: '建成后每回合 build 阶段可花 1 币累计 1 个标记;自己骰 10 时,按累计标记数从对手处收等额金币',     symbol: 'major', mode: 'millionaire' },
+  { id: 'exhibit_hall',  name: '会展中心', color: 'purple',activation: [10],     cost: 7, supply: 2, description: '激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库',                       symbol: 'major', mode: 'millionaire' },
+  { id: 'park',          name: '公园',     color: 'purple',activation: [11, 12, 13], cost: 3, supply: 2, description: '所有玩家金币重新均分(向上取整)',                                  symbol: 'major', mode: 'millionaire' },
 ];
 
 /** 全部建筑(基础 + 港口 + 百万富翁) — 仅供 CATALOG 索引;实际可购卡牌请走 getBuildings(mode) */
