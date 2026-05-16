@@ -99,8 +99,12 @@ export default function Rules() {
                 <td>
                   {l.name}
                   {l.builtByDefault && <span className="rules__tag rules__tag--warn">★ 默认建成</span>}
-                  {l.mode === 'harbor' && !l.builtByDefault && <span className="rules__tag">港口扩展</span>}
-                  {l.mode === 'millionaire' && !l.builtByDefault && <span className="rules__tag">百万富翁</span>}
+                  {l.mode === 'harbor' && !l.builtByDefault && (
+                    <span className="rules__modeBadge" title="港口扩展">港扩</span>
+                  )}
+                  {l.mode === 'millionaire' && !l.builtByDefault && (
+                    <span className="rules__modeBadge rules__modeBadge--mil" title="百万富翁扩展">百扩</span>
+                  )}
                 </td>
                 <td>{l.builtByDefault ? '—' : l.cost}</td>
                 <td>{l.description}</td>
@@ -111,7 +115,59 @@ export default function Rules() {
       </section>
 
       <section>
-        <h2>五、完整卡牌清单({modeLabel})</h2>
+        <h2>五、卡牌颜色与触发规则</h2>
+        <p className="rules__note">每张建筑左上角的颜色,决定了它在<strong>谁的回合</strong>触发、以及钱从哪里来。</p>
+        <table className="rules__table rules__table--colors">
+          <thead>
+            <tr>
+              <th>颜色</th>
+              <th>类别</th>
+              <th>触发时机</th>
+              <th>结算方向</th>
+              <th>购买上限</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="rules__colorRow rules__colorRow--blue">
+              <td><span className="rules__colorDot rules__colorDot--blue" aria-hidden /> 蓝色</td>
+              <td>原料 / 第一产业</td>
+              <td><strong>任何玩家</strong>掷出对应点数</td>
+              <td>持有者从<strong>银行</strong>获得金币</td>
+              <td>每种最多 6 张</td>
+            </tr>
+            <tr className="rules__colorRow rules__colorRow--green">
+              <td><span className="rules__colorDot rules__colorDot--green" aria-hidden /> 绿色</td>
+              <td>商铺 / 工厂</td>
+              <td>仅在<strong>自己</strong>掷出对应点数时</td>
+              <td>持有者从<strong>银行</strong>获得金币</td>
+              <td>每种最多 6 张</td>
+            </tr>
+            <tr className="rules__colorRow rules__colorRow--red">
+              <td><span className="rules__colorDot rules__colorDot--red" aria-hidden /> 红色</td>
+              <td>餐饮 / 抢钱</td>
+              <td>仅在<strong>对手</strong>掷出对应点数时</td>
+              <td>持有者从<strong>当前掷骰玩家</strong>抢钱(对方不够则尽量收)</td>
+              <td>每种最多 6 张</td>
+            </tr>
+            <tr className="rules__colorRow rules__colorRow--purple">
+              <td><span className="rules__colorDot rules__colorDot--purple" aria-hidden /> 紫色</td>
+              <td>大型设施 / 主动技</td>
+              <td>仅在<strong>自己</strong>掷出对应点数时</td>
+              <td>效果各异:抢钱、洗牌、锁卡、复制等</td>
+              <td><strong>每位玩家每种限 1 张</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        <ul className="rules__note">
+          <li><strong>结算顺序</strong>:同一次掷骰中,先红 → 蓝 → 绿 → 紫,逐色按"距当前玩家最远先结"。</li>
+          <li><strong>银行付不起</strong>:蓝/绿色由银行支付,银行金币无上限,不会"付不出"。</li>
+          <li><strong>对手付不起</strong>:红色 / 紫色抢钱,对手金币不足时,只收他剩下的全部,差额清零。</li>
+          <li><strong>建造顺序无关</strong>:卡牌结算只看颜色和当回合点数,不看你是哪一回合买的。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>六、完整卡牌清单({modeLabel})</h2>
 
         {grouped.map(({ color, list }) => (
           <div key={color} className="rules__cardgroup">
@@ -180,7 +236,7 @@ export default function Rules() {
 
       {hasHarbor && (
         <section>
-          <h2>六、港口扩展要点</h2>
+          <h2>七、港口扩展要点</h2>
           <ul>
             <li><strong>市政厅</strong>(默认建成):进入建造阶段时,若金币 &lt;1,自动补到 1 币。</li>
             <li><strong>港口</strong>(可购买,2 币):建成后,双骰且和 ≥10 时可选择给点数 +2。</li>
@@ -196,7 +252,7 @@ export default function Rules() {
 
       {hasMillionaire && (
         <section>
-          <h2>{hasHarbor ? '七' : '六'}、百万富翁扩展要点</h2>
+          <h2>{hasHarbor ? '八' : '七'}、百万富翁扩展要点</h2>
           <ul>
             <li><strong>玉米田</strong>(蓝 3-4,造价 2):仅在你 ≤1 地标时,每张 +1 币。</li>
             <li><strong>葡萄园</strong>(蓝 7):每张 +3 币(为葡萄酒庄供能)。</li>
@@ -217,7 +273,7 @@ export default function Rules() {
       )}
 
       <section>
-        <h2>{(hasHarbor && hasMillionaire) ? '八' : (hasHarbor || hasMillionaire) ? '七' : '六'}、关键策略提示</h2>
+        <h2>{(hasHarbor && hasMillionaire) ? '九' : (hasHarbor || hasMillionaire) ? '八' : '七'}、关键策略提示</h2>
         <ul>
           <li>早建火车站,解锁双骰后高点数建筑才有触发空间。</li>
           <li>平衡蓝绿红:蓝色稳定、绿色爆发、红色压制对手。</li>

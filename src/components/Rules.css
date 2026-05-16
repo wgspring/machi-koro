@@ -93,6 +93,32 @@
 .rules__grouptitle--red    { background: #d64545; }
 .rules__grouptitle--purple { background: #8557d6; }
 
+/* 五、卡牌颜色与触发规则 — 概览表 */
+.rules__colorDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid rgba(0, 0, 0, .15);
+}
+.rules__colorDot--blue   { background: #3b82f6; }
+.rules__colorDot--green  { background: #22a06b; }
+.rules__colorDot--red    { background: #d64545; }
+.rules__colorDot--purple { background: #8557d6; }
+
+.rules__colorRow--blue   td:first-child { color: #1d4ed8; font-weight: 600; }
+.rules__colorRow--green  td:first-child { color: #1a7a52; font-weight: 600; }
+.rules__colorRow--red    td:first-child { color: #b53636; font-weight: 600; }
+.rules__colorRow--purple td:first-child { color: #6c3fc2; font-weight: 600; }
+@media (prefers-color-scheme: dark) {
+  .rules__colorRow--blue   td:first-child { color: #7aa6ff; }
+  .rules__colorRow--green  td:first-child { color: #6fd9a3; }
+  .rules__colorRow--red    td:first-child { color: #ff8888; }
+  .rules__colorRow--purple td:first-child { color: #c8a6ff; }
+}
+
 .rules__note {
   font-size: 0.9rem;
   color: #888;
