@@ -33,11 +33,17 @@
   color: var(--p-strong);
   border-radius: 6px;
   cursor: pointer;
-  transition: background .15s ease, border-color .15s ease;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+  margin-left: 8px;
 }
-.market__skip:hover {
+.market__skip:hover:not(:disabled) {
   background: color-mix(in srgb, var(--p-color) 22%, white);
   border-color: var(--p-color);
+}
+.market__skip:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  filter: grayscale(.5);
 }
 
 /* 卡池滚动容器 */
@@ -185,7 +191,6 @@
   line-height: 1.3;
   /* 限制最多 2 行,超出省略,保证不挤占底部 */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

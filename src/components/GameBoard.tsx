@@ -25,9 +25,8 @@ function PhaseHint() {
     const kindLabel: Record<string, string> = {
       demolish: '🚧 拆迁公司:选择地标',
       moving: '🏢 搬家公司:选择卡牌',
-      renovation: '🛠️ 装修公司:选择锁定卡牌',
+      renovation: '🛠️ 装修公司:选择要装修的对手卡牌',
       exhibit: '🏟️ 会展中心:选择要激活的己方建筑',
-      tech: '💻 科技公司:是否放置标记',
       business_take: '🏢 商业中心:选择对手要换的卡',
       business_give: '🏢 商业中心:选择自己要换出的卡',
     };

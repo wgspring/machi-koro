@@ -48,6 +48,29 @@ export default function Market() {
   // 本回合新补到市场的卡 id(用于"闪光"动效);base 模式不会出现新补卡
   const freshSet = new Set(market?.freshIds ?? []);
 
+  // 科技公司:投资按钮显示条件
+  const techOwned = (me.buildings['tech_startup'] ?? 0) > 0;
+  const techMarkers = me.techMarkers ?? 0;
+  const canInvestTech =
+    buildPhase && techOwned && !state.techInvestedThisTurn && me.coins >= 1;
+  const renderTechInvest = () =>
+    techOwned ? (
+      <button
+        className="market__skip"
+        onClick={() => dispatch({ type: 'INVEST_TECH' })}
+        disabled={!canInvestTech}
+        title={
+          state.techInvestedThisTurn
+            ? '本回合已投资过'
+            : me.coins < 1
+            ? '金币不足'
+            : `当前累计 ${techMarkers} 个标记`
+        }
+      >
+        💻 投资 1 币(累计 {techMarkers})
+      </button>
+    ) : null;
+
   const canBuyBuilding = (id: string) => {
     if (!buildPhase) return false;
     const card = cardById(id);
@@ -55,26 +78,22 @@ export default function Market() {
     if ((supply[id] ?? 0) <= 0) return false;
     if (me.coins < card.cost) return false;
     if (card.color === 'purple' && (me.buildings[id] ?? 0) >= 1) return false;
-    if (state.renovationLockedKind === id) return false;
     return true;
   };
 
   const renderCard = (b: BuildingCard) => {
     const left = supply[b.id] ?? 0;
     const enabled = canBuyBuilding(b.id);
-    const renovLocked = state.renovationLockedKind === b.id;
     const isFresh = freshSet.has(b.id);
     const art = getBuildingArt(b.id);
     const sym = SYMBOL_META[b.symbol];
     return (
       <button
         key={b.id}
-        className={`card ${COLOR_CLASS[b.color]} ${isFresh ? 'card--fresh' : ''} ${renovLocked ? 'card--locked' : ''}`}
+        className={`card ${COLOR_CLASS[b.color]} ${isFresh ? 'card--fresh' : ''}`}
         disabled={!enabled}
         onClick={() => dispatch({ type: 'BUY_BUILDING', cardId: b.id })}
-        title={renovLocked
-          ? `🛠️ 装修公司全场锁定 · 暂不可购买`
-          : `${sym.label} · ${b.description}${isFresh ? ' · 新补卡' : ''}`}
+        title={`${sym.label} · ${b.description}${isFresh ? ' · 新补卡' : ''}`}
         style={art ? { ['--card-art' as string]: `url("${art}")` } : undefined}
       >
         <div className="card__top">
@@ -84,16 +103,13 @@ export default function Market() {
             <span className="card__act">{fmtAct(b.activation)}</span>
           </div>
           <div className="card__desc">{b.description}</div>
-          {(b.mode === 'harbor' || b.mode === 'millionaire' || renovLocked) && (
+          {(b.mode === 'harbor' || b.mode === 'millionaire') && (
             <div className="card__tags">
               {b.mode === 'harbor' && (
                 <span className="card__modeBadge" title="港口扩展">港扩</span>
               )}
               {b.mode === 'millionaire' && (
                 <span className="card__modeBadge card__modeBadge--mil" title="百万富翁扩展">百扩</span>
-              )}
-              {renovLocked && (
-                <span className="card__modeBadge card__modeBadge--lock" title="装修公司全场锁定">🛠️ 装修锁定</span>
               )}
             </div>
           )}
@@ -133,9 +149,12 @@ export default function Market() {
             场上 {ids.length}/{MARKET_DISPLAY_KINDS} 种 · 牌库剩 {remaining} 张
           </span>
           {buildPhase && (
-            <button className="market__skip" onClick={() => dispatch({ type: 'SKIP_BUILD' })}>
-              跳过建造
-            </button>
+            <>
+              {renderTechInvest()}
+              <button className="market__skip" onClick={() => dispatch({ type: 'SKIP_BUILD' })}>
+                跳过建造
+              </button>
+            </>
           )}
         </div>
         <div className="market__scroll">
@@ -162,9 +181,12 @@ export default function Market() {
       <div className="market__head">
         <h3>卡池 · 基础版</h3>
         {buildPhase && (
-          <button className="market__skip" onClick={() => dispatch({ type: 'SKIP_BUILD' })}>
-            跳过建造
-          </button>
+          <>
+            {renderTechInvest()}
+            <button className="market__skip" onClick={() => dispatch({ type: 'SKIP_BUILD' })}>
+              跳过建造
+            </button>
+          </>
         )}
       </div>
 

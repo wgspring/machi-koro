@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGame } from '../state/GameContext';
 import { CATALOG } from '../data/engine';
 import { getLandmarks } from '../data/cards';
@@ -14,7 +16,23 @@ const COLOR_CLASS = {
   purple: 'tag tag--purple',
 } as const;
 
-function BuildingList({ player, lockedKind }: { player: PlayerState; lockedKind: string | null | undefined }) {
+const fmtAct = (a: number[]) =>
+  a.length === 1 ? `${a[0]}` : `${a[0]}-${a[a.length - 1]}`;
+
+interface HoverState {
+  id: string;
+  /** li 的 right 坐标(用于默认右侧锚定) */
+  x: number;
+  /** li 的 top 坐标 */
+  y: number;
+  /** li 的 left 坐标(用于"放不下时翻到左侧") */
+  leftX: number;
+}
+
+function BuildingList({ player }: { player: PlayerState }) {
+  const [hover, setHover] = useState<HoverState | null>(null);
+  const tipRef = useRef<HTMLDivElement | null>(null);
+
   const owned = Object.entries(player.buildings)
     .filter(([, n]) => n > 0)
     .map(([id, n]) => ({ id, n, card: CATALOG.byId[id] }))
@@ -22,39 +40,90 @@ function BuildingList({ player, lockedKind }: { player: PlayerState; lockedKind:
     .sort((a, b) => a.card.activation[0] - b.card.activation[0]);
 
   if (!owned.length) return <div className="pp__empty">暂无建筑</div>;
+
+  const hoverCard = hover ? CATALOG.byId[hover.id] : null;
+  // 文本气泡尺寸估算
+  const tipMaxW = 220;
+  // 默认放在 li 右侧;若右侧放不下则放在 li 左侧
+  let tx = 0;
+  let ty = 0;
+  let placeLeft = false;
+  if (hover) {
+    const rightX = hover.x + 8;
+    const fitsRight = rightX + tipMaxW + 8 <= window.innerWidth;
+    if (fitsRight) {
+      tx = rightX;
+    } else {
+      placeLeft = true;
+      // 占位:渲染后由 useEffect 用真实宽度修正
+      tx = Math.max(8, hover.leftX - tipMaxW - 8);
+    }
+    ty = Math.max(8, hover.y - 4);
+  }
+
+  // 通过 li 元素自身的 boundingRect 计算坐标,避免任何祖先 transform/坐标系问题
+  const handleHover = (id: string, target: HTMLElement) => {
+    const rect = target.getBoundingClientRect();
+    setHover({ id, x: rect.right, y: rect.top, leftX: rect.left });
+  };
+
+  // 渲染后:命令式强制位置,且左侧模式按真实宽度精确贴近 li
+  useEffect(() => {
+    const el = tipRef.current;
+    if (!el || !hover) return;
+    let left = tx;
+    if (placeLeft) {
+      const realW = el.offsetWidth;
+      left = Math.max(8, hover.leftX - realW - 8);
+    }
+    el.style.setProperty('left', `${left}px`, 'important');
+    el.style.setProperty('top', `${ty}px`, 'important');
+    el.style.setProperty('right', 'auto', 'important');
+    el.style.setProperty('bottom', 'auto', 'important');
+    el.style.setProperty('transform', 'none', 'important');
+  }, [hover, tx, ty, placeLeft]);
+
   return (
-    <ul className="pp__buildings">
-      {owned.map(({ id, n, card }) => {
-        const disabledCnt = player.disabled?.[id] ?? 0;
-        const renovLocked = lockedKind === id;
-        const tag = renovLocked
-          ? '🛠️ 装修锁定'
-          : disabledCnt > 0
-            ? `🔒 翻面 ${disabledCnt}/${n}`
-            : null;
-        const techCnt = id === 'tech_startup' ? (player.techMarkers ?? 0) : 0;
-        return (
-          <li key={id} className={`${COLOR_CLASS[card.color]} ${renovLocked || disabledCnt > 0 ? 'pp__bld--off' : ''}`}>
-            <span className="pp__act">
-              {card.activation.length === 1
-                ? card.activation[0]
-                : `${card.activation[0]}-${card.activation[card.activation.length - 1]}`}
-            </span>
-            <span
-              className="pp__icon"
-              aria-label={SYMBOL_META[card.symbol].label}
-              title={SYMBOL_META[card.symbol].label}
+    <>
+      <ul className="pp__buildings">
+        {owned.map(({ id, n, card }) => {
+          const renoCnt = player.underRenovation?.[id] ?? 0;
+          const tag = renoCnt > 0 ? `🛠️ 装修中 ${renoCnt}/${n}` : null;
+          const techCnt = id === 'tech_startup' ? (player.techMarkers ?? 0) : 0;
+          return (
+            <li
+              key={id}
+              className={`${COLOR_CLASS[card.color]} ${renoCnt >= n ? 'pp__bld--off' : ''}`}
+              onMouseEnter={(e) => handleHover(id, e.currentTarget)}
+              onMouseLeave={() => setHover(null)}
             >
-              {SYMBOL_META[card.symbol].emoji}
-            </span>
-            <span className="pp__name">{card.name}</span>
-            {card.color !== 'purple' && n > 1 && <span className="pp__count">×{n}</span>}
-            {techCnt > 0 && <span className="pp__count pp__count--tech" title="科技标记">💻×{techCnt}</span>}
-            {tag && <span className="pp__count pp__count--off">{tag}</span>}
-          </li>
-        );
-      })}
-    </ul>
+              <span className="pp__act">{fmtAct(card.activation)}</span>
+              <span
+                className="pp__icon"
+                aria-label={SYMBOL_META[card.symbol].label}
+                title={SYMBOL_META[card.symbol].label}
+              >
+                {SYMBOL_META[card.symbol].emoji}
+              </span>
+              <span className="pp__name">{card.name}</span>
+              {card.color !== 'purple' && n > 1 && <span className="pp__count">×{n}</span>}
+              {techCnt > 0 && <span className="pp__count pp__count--tech" title="科技标记">💻×{techCnt}</span>}
+              {tag && <span className="pp__count pp__count--off">{tag}</span>}
+            </li>
+          );
+        })}
+      </ul>
+      {hover && hoverCard && createPortal(
+        <div
+          ref={tipRef}
+          className="pp__bldTip"
+          style={{ left: tx, top: ty, maxWidth: tipMaxW }}
+        >
+          {hoverCard.description}
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
 
@@ -135,7 +204,7 @@ export default function PlayerPanel({ playerId }: { playerId: 0 | 1 }) {
       </section>
       <section className="pp__section pp__section--scroll">
         <h4>建筑</h4>
-        <BuildingList player={player} lockedKind={state.renovationLockedKind} />
+        <BuildingList player={player} />
       </section>
     </div>
   );

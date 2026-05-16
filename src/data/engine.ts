@@ -144,7 +144,7 @@ const makePlayer = (id: 0 | 1, name: string, mode: GameMode): PlayerState => {
   for (const l of getLandmarks(mode)) landmarks[l.id] = !!l.builtByDefault;
   return {
     id, name, coins: initialCoins(), buildings, landmarks,
-    disabled: {},
+    underRenovation: {},
     techMarkers: 0,
   };
 };
@@ -210,18 +210,28 @@ const cloneState = (s: GameState): GameState => ({
       ...s.players[0],
       buildings: { ...s.players[0].buildings },
       landmarks: { ...s.players[0].landmarks },
-      disabled: { ...(s.players[0].disabled ?? {}) },
+      underRenovation: { ...(s.players[0].underRenovation ?? {}) },
     },
     {
       ...s.players[1],
       buildings: { ...s.players[1].buildings },
       landmarks: { ...s.players[1].landmarks },
-      disabled: { ...(s.players[1].disabled ?? {}) },
+      underRenovation: { ...(s.players[1].underRenovation ?? {}) },
     },
   ],
   supply: { ...s.supply },
   market: cloneMarket(s.market),
-  pendingChoices: s.pendingChoices ? s.pendingChoices.map((c) => ({ ...c, options: 'options' in c ? [...c.options] : undefined } as PendingChoice)) : undefined,
+  pendingChoices: s.pendingChoices
+    ? s.pendingChoices.map((c) => {
+        const cloned: PendingChoice = { ...c };
+        if ('options' in cloned && Array.isArray((cloned as { options?: unknown }).options)) {
+          (cloned as { options: string[] }).options = [
+            ...((cloned as { options: string[] }).options),
+          ];
+        }
+        return cloned;
+      })
+    : undefined,
   _resolvedChoices: s._resolvedChoices ? { ...s._resolvedChoices } : undefined,
   log: [...s.log],
 });
@@ -343,17 +353,15 @@ export function rerollDice(
 /*                                  结算收益                                  */
 /* -------------------------------------------------------------------------- */
 
-/** 该卡**有效**张数(排除翻面停用)— 用于触发收益和符号统计 */
+/** 该卡**有效**张数(排除装修态)— 用于触发收益和符号统计 */
 const countOf = (p: PlayerState, id: string) => {
   const total = p.buildings[id] ?? 0;
-  const off = p.disabled?.[id] ?? 0;
+  const off = p.underRenovation?.[id] ?? 0;
   return Math.max(0, total - off);
 };
-/** 当前游戏全局是否对某 id 启用了"装修锁定"(对所有玩家生效) */
-const isRenovationLocked = (s: GameState, id: string) => s.renovationLockedKind === id;
-/** 该卡有效张数(同时考虑装修公司全局锁定) */
-const effectiveCountOf = (s: GameState, p: PlayerState, id: string) =>
-  isRenovationLocked(s, id) ? 0 : countOf(p, id);
+/** 该卡有效张数(等同 countOf,保留旧名兼容) */
+const effectiveCountOf = (_s: GameState, p: PlayerState, id: string) =>
+  countOf(p, id);
 
 /** 玩家已建成的"非默认建成"地标数量(用于百万富翁的"地标数前置条件") */
 const builtLandmarkCount = (p: PlayerState): number => {
@@ -424,20 +432,20 @@ export interface IncomeBreakdown {
     demolish?: number;
     /** 拆迁公司:具体拆掉的地标 id 列表(由 choices 指定或默认推断) */
     demolishLandmarkIds?: string[];
-    /** 葡萄酒庄:本次结算后,主动玩家所有 winery 翻面停用 */
-    wineryDisabled?: boolean;
+    /** 葡萄酒庄:本次结算后,主动玩家所有 winery 进入装修态 */
+    wineryRenovate?: boolean;
     /** 搬家公司:主动玩家送给对手的卡牌 id 列表(简化为送最低成本的非紫卡各 1) */
     movingGiveIds?: string[];
-    /** 装修公司:本次结算锁定某种非紫卡牌(全场停用) */
-    renovationLock?: string;
-    /** 装修公司:本次触发先解除上一次锁定(规则:再次触发时旧锁失效) */
-    renovationUnlock?: boolean;
-    /** 科技公司:主动玩家科技标记本次新增 */
-    techMarkerGain?: number;
+    /** 装修公司:把哪些卡放入装修态 — 包含目标对手 id 与卡牌 id */
+    renovationTarget?: { playerId: 0 | 1; buildingId: string };
+    /** 科技公司:本次自骰 10 后清零的累计标记数(等价于已抽走的金币数) */
+    techMarkersConsumed?: number;
     /** 公园:本次结算后,两人金币池均分 */
     parkRedistribute?: boolean;
     /** 会展中心:本次触发后,主动玩家手中 exhibit_hall -1,1 张放回市场 deck */
     exhibitConsumed?: boolean;
+    /** 装修态恢复:本回合根据触发条件应自动恢复的"装修中"卡张数(此次仍不结算) */
+    renovationRestores?: { playerId: 0 | 1; buildingId: string; count: number }[];
   };
 }
 
@@ -464,14 +472,12 @@ function getTunaRoll(state: GameState): number {
  *  - movingGiveIds      :搬家公司:依次要送出的非紫卡 id 列表
  *  - renovationLockId   :装修公司:要锁定的对手非紫卡 id
  *  - exhibitActivateId  :会展中心:要激活的己方非紫卡 id(用于触发其全部张数收益)
- *  - techPlace          :科技公司:本次是否放标记(true/false)
  */
 export interface ResolveChoices {
   demolishLandmarkIds?: string[];
   movingGiveIds?: string[];
   renovationLockId?: string;
   exhibitActivateId?: string;
-  techPlace?: boolean;
   /** 商业中心:玩家选定要从对手处拿走的非紫卡 id */
   businessTakeId?: string;
   /** 商业中心:玩家选定要送出去的己方非紫卡 id(在 take 之后产生) */
@@ -513,11 +519,41 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
   let trade: IncomeBreakdown['trade'];
   const effects: NonNullable<IncomeBreakdown['effects']> = {};
 
+  // 装修态恢复:对每张"装修中"的卡,只要本次触发条件命中,就排在 effects.renovationRestores
+  // 中等待 finalize 时减计;本回合该卡仍不结算(等同 countOf 自动过滤,无需额外判定)
+  {
+    const restores: NonNullable<IncomeBreakdown['effects']>['renovationRestores'] = [];
+    for (const pid of [0, 1] as const) {
+      const p = players[pid];
+      const ur = p.underRenovation ?? {};
+      for (const [bid, n] of Object.entries(ur)) {
+        if (!n || n <= 0) continue;
+        const c = CATALOG.byId[bid];
+        if (!c) continue;
+        if (!c.activation.includes(sum)) continue;
+        // 颜色触发条件:绿/紫=自骰命中,蓝=任何人,红=对手骰
+        let triggered = false;
+        if (c.color === 'green' || c.color === 'purple') triggered = pid === active;
+        else if (c.color === 'blue') triggered = true;
+        else if (c.color === 'red') triggered = pid !== active;
+        if (!triggered) continue;
+        restores.push({ playerId: pid, buildingId: bid, count: n });
+        const ownerName = pid === active ? '己方' : '对手';
+        items[active].push({
+          cardName: `🛠️ ${ownerName}「${c.name}」装修恢复 ×${n}(本回合不结算)`,
+          count: n,
+          delta: 0,
+          category: 'purple-coin',
+        });
+      }
+    }
+    if (restores.length > 0) effects.renovationRestores = restores;
+  }
+
   // 1. 红色:对手的红色建筑从主动玩家身上抢钱
   for (const card of cards) {
     if (card.color !== 'red' || !card.activation.includes(sum)) continue;
     if (card.requiresHarbor && !players[opponent].landmarks.harbor) continue;
-    if (isRenovationLocked(state, card.id)) continue;
     const owner = opponent;
     const cnt = countOf(players[owner], card.id);
     if (cnt === 0) continue;
@@ -556,7 +592,6 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     for (const card of cards) {
       if (card.color !== 'blue' || !card.activation.includes(sum)) continue;
       if (card.requiresHarbor && !players[pid].landmarks.harbor) continue;
-      if (isRenovationLocked(state, card.id)) continue;
       const cnt = countOf(players[pid], card.id);
       if (cnt === 0) continue;
       // 百万富翁 · 玉米田:仅在该玩家 ≤1 地标时生效
@@ -586,7 +621,6 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
   for (const card of cards) {
     if (card.color !== 'green' || !card.activation.includes(sum)) continue;
     if (card.requiresHarbor && !players[active].landmarks.harbor) continue;
-    if (isRenovationLocked(state, card.id)) continue;
     const me = players[active];
     const cnt = countOf(me, card.id);
     if (cnt === 0) continue;
@@ -605,7 +639,7 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     else if (card.id === 'food_warehouse') perCardBase = 2 * cupSymbolCount(state, me);
     // 百万富翁 · 杂货店 +2 币
     else if (card.id === 'general_store') perCardBase = 2;
-    // 百万富翁 · 葡萄酒庄:每张葡萄园 +6 币;触发后此卡永久翻面停用(在 resolve 中处理)
+    // 百万富翁 · 葡萄酒庄:每张葡萄园 +6 币;触发后此卡进入装修态(在 resolve 中处理)
     else if (card.id === 'winery') perCardBase = 6 * countOf(me, 'vineyard');
     // 百万富翁 · 饮料工厂:任何人骰 11,所有玩家每张 ☕杯型 +1 币(由"任何人触发"分支处理,这里不出钱)
     else if (card.id === 'soda_factory') perCardBase = 0;
@@ -616,8 +650,8 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     if (gain > 0) {
       coins[active] += gain;
       items[active].push({ cardName: card.name, count: cnt, delta: gain, category: 'green' });
-      // 葡萄酒庄触发后永久翻面停用
-      if (card.id === 'winery') effects.wineryDisabled = true;
+      // 葡萄酒庄触发后所有 winery 进入装修态
+      if (card.id === 'winery') effects.wineryRenovate = true;
     }
   }
 
@@ -625,7 +659,6 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
   // 拆迁公司(自骰 4):每张让你拆 1 座地标 + 银行付 8 币
   for (const card of cards) {
     if (card.id !== 'demolition' || !card.activation.includes(sum)) continue;
-    if (isRenovationLocked(state, card.id)) continue;
     const me = players[active];
     const cnt = countOf(me, card.id);
     if (cnt === 0) continue;
@@ -635,16 +668,24 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
       .map(([id]) => id);
     const triggers = Math.min(cnt, demolishable.length);
     if (triggers === 0) continue;
-    // 用户选择优先,否则用默认(成本最高优先)
-    const chosen = ch.demolishLandmarkIds && ch.demolishLandmarkIds.length > 0
-      ? ch.demolishLandmarkIds
-      : demolishable.sort((a, b) => CATALOG.landmarkById[b].cost - CATALOG.landmarkById[a].cost).slice(0, triggers);
-    const actualCount = Math.min(triggers, chosen.length);
+    // 玩家未做出全部选择前,只显示占位,不真正应用拆除/收益
+    const userPicks = ch.demolishLandmarkIds ?? [];
+    if (userPicks.length < triggers) {
+      items[active].push({
+        cardName: `${card.name}:等待选择要拆除的地标…`,
+        count: cnt,
+        delta: 0,
+        category: 'green',
+      });
+      continue;
+    }
+    const chosen = userPicks.slice(0, triggers);
+    const actualCount = chosen.length;
     if (actualCount === 0) continue;
     const gain = actualCount * 8;
     coins[active] += gain;
     items[active].push({
-      cardName: `${card.name}(拆 ${chosen.slice(0, actualCount).map((id) => `「${CATALOG.landmarkById[id]?.name ?? id}」`).join('')})`,
+      cardName: `${card.name}(拆 ${chosen.map((id) => `「${CATALOG.landmarkById[id]?.name ?? id}」`).join('')})`,
       count: cnt,
       delta: gain,
       category: 'green',
@@ -655,7 +696,6 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
   // 借贷公司(自骰 5-6):每张付每位对手 2 币
   for (const card of cards) {
     if (card.id !== 'loan_office' || !card.activation.includes(sum)) continue;
-    if (isRenovationLocked(state, card.id)) continue;
     const me = players[active];
     const cnt = countOf(me, card.id);
     if (cnt === 0) continue;
@@ -669,37 +709,34 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
   // 搬家公司(自骰 9-10):每张让你送一张非紫给对手 → 从他拿 4 币
   for (const card of cards) {
     if (card.id !== 'moving_co' || !card.activation.includes(sum)) continue;
-    if (isRenovationLocked(state, card.id)) continue;
     const me = players[active];
     const cnt = countOf(me, card.id);
     if (cnt === 0) continue;
-    let giveIds: string[];
-    if (ch.movingGiveIds && ch.movingGiveIds.length > 0) {
-      // 用户已选择;只取前 cnt 张且必须是当前持有的非紫卡
-      const owned: Record<string, number> = {};
-      for (const [id, n] of Object.entries(me.buildings)) {
-        if (n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple') owned[id] = n;
-      }
-      giveIds = [];
-      for (const id of ch.movingGiveIds.slice(0, cnt)) {
-        if ((owned[id] ?? 0) > 0) {
-          owned[id]! -= 1;
-          giveIds.push(id);
-        }
-      }
-    } else {
-      // 默认:每次送当前最便宜的非紫卡
-      const virtual: Record<string, number> = {};
-      for (const [id, n] of Object.entries(me.buildings)) {
-        if (n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple') virtual[id] = n;
-      }
-      giveIds = [];
-      for (let t = 0; t < cnt; t++) {
-        const pool = Object.entries(virtual).filter(([, n]) => n > 0);
-        if (pool.length === 0) break;
-        const giveId = pool.sort((a, b) => CATALOG.byId[a[0]].cost - CATALOG.byId[b[0]].cost)[0][0];
-        virtual[giveId] -= 1;
-        giveIds.push(giveId);
+    // 检查是否有可送出的非紫卡;没有则跳过(detect 阶段也会跳过)
+    const myNonPurple = Object.entries(me.buildings)
+      .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple');
+    if (myNonPurple.length === 0) continue;
+    // 玩家未做出全部选择前,只显示占位
+    const userPicks = ch.movingGiveIds ?? [];
+    if (userPicks.length < cnt) {
+      items[active].push({
+        cardName: `${card.name}:等待选择要送出的卡牌…`,
+        count: cnt,
+        delta: 0,
+        category: 'green',
+      });
+      continue;
+    }
+    // 玩家已选;校验持有性,过滤无效项
+    const owned: Record<string, number> = {};
+    for (const [id, n] of myNonPurple) {
+      owned[id] = n;
+    }
+    const giveIds: string[] = [];
+    for (const id of userPicks.slice(0, cnt)) {
+      if ((owned[id] ?? 0) > 0) {
+        owned[id]! -= 1;
+        giveIds.push(id);
       }
     }
     if (giveIds.length === 0) continue;
@@ -721,7 +758,6 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
   // 饮料工厂(任何人骰 11):所有玩家每张 ☕杯型 +1 币
   for (const card of cards) {
     if (card.id !== 'soda_factory' || !card.activation.includes(sum)) continue;
-    if (isRenovationLocked(state, card.id)) continue;
     // 只要场上任何人拥有,就对全场生效;原版:每张饮料工厂触发一次"全场每张 ☕ +1"
     for (const pid of [0, 1] as const) {
       const ownerCnt = countOf(players[pid], card.id);
@@ -825,91 +861,76 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
         }
       }
     } else if (card.id === 'renovation') {
-      // 装修公司(自骰 8):选定一种非紫卡牌,对手每张该卡支付你 1 币;此后该卡全场停用
-      // 规则:本卡再次触发时,**先解除上一次的锁定**(即使本次因对手无可锁卡而提前 continue,
-      // 也要让旧锁失效)
-      if (state.renovationLockedKind) {
-        effects.renovationUnlock = true;
+      // 装修公司(自骰 8):选定一名对手某种非紫卡;从该对手收 1 币/张;这些卡进入装修态
+      const oppNonPurple = Object.entries(players[opponent].buildings)
+        .filter(([id, n]) => {
+          if (n <= 0) return false;
+          const c = CATALOG.byId[id];
+          if (!c || c.color === 'purple') return false;
+          // 只列出还有"非装修态"张数可锁的卡
+          return countOf(players[opponent], id) > 0;
+        })
+        .map(([id]) => ({ id, n: countOf(players[opponent], id) }));
+      if (oppNonPurple.length === 0) continue;
+      // 玩家未选定锁定目标前,只显示占位,不收税也不进入装修态
+      if (!ch.renovationLockId || !oppNonPurple.some((x) => x.id === ch.renovationLockId)) {
         items[active].push({
-          cardName: `${card.name}(解除上次锁定「${CATALOG.byId[state.renovationLockedKind]?.name ?? state.renovationLockedKind}」)`,
+          cardName: `${card.name}:等待选择要装修的卡牌…`,
           count: 1,
           delta: 0,
           category: 'purple-coin',
         });
+        continue;
       }
-      const oppNonPurple = Object.entries(players[opponent].buildings)
-        .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
-        .map(([id, n]) => ({ id, n, cost: CATALOG.byId[id].cost }));
-      if (oppNonPurple.length === 0) continue;
-      // 用户选择优先;否则选数量最多 + 成本最高
-      let lockId: string;
-      if (ch.renovationLockId && oppNonPurple.some((x) => x.id === ch.renovationLockId)) {
-        lockId = ch.renovationLockId;
-      } else {
-        oppNonPurple.sort((a, b) => (b.n - a.n) || (b.cost - a.cost));
-        lockId = oppNonPurple[0].id;
-      }
+      const lockId = ch.renovationLockId;
       const targetN = oppNonPurple.find((x) => x.id === lockId)!.n;
       const owe = targetN * 1;
       const got = tryTransfer(opponent, active, owe);
       if (got > 0) {
         items[active].push({
-          cardName: `${card.name}(锁定「${CATALOG.byId[lockId].name}」)`,
+          cardName: `${card.name}(装修「${CATALOG.byId[lockId].name}」×${targetN})`,
           count: targetN,
           delta: got,
           category: 'purple-coin',
         });
         items[opponent].push({
-          cardName: `被${card.name}收 ${targetN} 张「${CATALOG.byId[lockId].name}」`,
+          cardName: `被${card.name}装修 ${targetN} 张「${CATALOG.byId[lockId].name}」`,
           count: targetN,
           delta: -got,
           category: 'purple-coin',
         });
       } else {
         items[active].push({
-          cardName: `${card.name}(锁定「${CATALOG.byId[lockId].name}」)`,
+          cardName: `${card.name}(装修「${CATALOG.byId[lockId].name}」×${targetN})`,
           count: targetN,
           delta: 0,
           category: 'purple-coin',
         });
       }
-      effects.renovationLock = lockId;
+      effects.renovationTarget = { playerId: opponent, buildingId: lockId };
     } else if (card.id === 'tech_startup') {
-      // 科技公司(自骰 10):每次自骰 10 时,你可主动放 1 个标记;
-      // 用户没显式拒绝(techPlace !== false)就视为放
-      const place = ch.techPlace !== false;
-      if (place) {
-        effects.techMarkerGain = (effects.techMarkerGain ?? 0) + 1;
-        items[active].push({
-          cardName: `${card.name}(放置标记 +1,当前 ${(players[active].techMarkers ?? 0) + 1})`,
-          count: cnt,
-          delta: 0,
-          category: 'purple-coin',
-        });
-      } else {
-        items[active].push({
-          cardName: `${card.name}(选择不放标记)`,
-          count: cnt,
-          delta: 0,
-          category: 'purple-coin',
-        });
-      }
+      // 科技公司:自骰 10 不再产生主动效果(投资行为已迁移到 build 阶段);
+      // 真正的"抽税"逻辑在下面"对手骰 10 时主动玩家收钱"分支
+      // 这里什么也不做
     } else if (card.id === 'exhibit_hall') {
-      // 会展中心(自骰 11-12):激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库
+      // 会展中心(自骰 10):激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库
       // 收益按"该卡平时一次完整触发"计算(蓝/绿正常 +币;红色因主动触发者=自己,跳过抢钱)
       const me = players[active];
       const myNonPurple = Object.entries(me.buildings)
         .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
         .map(([id, n]) => ({ id, n, cost: CATALOG.byId[id].cost, color: CATALOG.byId[id].color }));
       if (myNonPurple.length === 0) continue;
-      let actId: string;
-      if (ch.exhibitActivateId && myNonPurple.some((x) => x.id === ch.exhibitActivateId)) {
-        actId = ch.exhibitActivateId;
-      } else {
-        // 默认:选一张产出最高的非紫卡。简单启发式:成本最高 → 数量最多
-        myNonPurple.sort((a, b) => (b.cost - a.cost) || (b.n - a.n));
-        actId = myNonPurple[0].id;
+      // 玩家未选定要激活的卡前,只显示占位
+      if (!ch.exhibitActivateId || !myNonPurple.some((x) => x.id === ch.exhibitActivateId)) {
+        items[active].push({
+          cardName: `${card.name}:等待选择要激活的己方建筑…`,
+          count: 1,
+          delta: 0,
+          category: 'purple-coin',
+        });
+        continue;
       }
+      const actId = ch.exhibitActivateId;
       const targetCard = CATALOG.byId[actId];
       const targetN = myNonPurple.find((x) => x.id === actId)!.n;
       // 计算"按 targetN 张该卡触发一次"的单张产出
@@ -969,30 +990,28 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
     }
   }
 
-  // 科技公司(对手骰 10):你按 tech 标记数从对手处收钱
-  // 注:这是"对手骰 10 时主动玩家收钱",而当前函数 active=骰子者,因此此处看 opponent 的 tech_startup
+  // 科技公司(自骰 10):**主动玩家**(active = 掷骰者)若持有此卡,从对手处收走累计 techMarkers 金币;techMarkers 清零(在 finalize 中处理)
   {
     const techCard = cards.find((c) => c.id === 'tech_startup');
     if (techCard && techCard.activation.includes(sum)) {
-      // 当前 active 骰了 10 → 对手是"科技公司持有者"角色
-      const techOwner = opponent;
-      const markers = players[techOwner].techMarkers ?? 0;
-      const cntT = countOf(players[techOwner], 'tech_startup');
+      const markers = players[active].techMarkers ?? 0;
+      const cntT = countOf(players[active], 'tech_startup');
       if (cntT > 0 && markers > 0) {
-        const got = tryTransfer(active, techOwner, markers);
+        const got = tryTransfer(opponent, active, markers);
         if (got > 0) {
-          items[techOwner].push({
-            cardName: `${techCard.name}(收 ${markers} 标记)`,
+          items[active].push({
+            cardName: `${techCard.name}(回收 ${markers} 标记)`,
             count: cntT,
             delta: got,
             category: 'purple-coin',
           });
-          items[active].push({
-            cardName: `被对手${techCard.name}收 ${markers} 币`,
+          items[opponent].push({
+            cardName: `被${techCard.name}收 ${markers} 币`,
             count: cntT,
             delta: -got,
             category: 'purple-coin',
           });
+          effects.techMarkersConsumed = markers;
         }
       }
     }
@@ -1049,7 +1068,7 @@ function detectPendingChoices(state: GameState): PendingChoice[] {
 
   // 拆迁公司:自骰 4,且至少有一座可拆地标
   if (has('demolition') && has('demolition')!.activation.includes(sum)
-      && !isRenovationLocked(state, 'demolition')
+     
       && countOf(me, 'demolition') > 0) {
     const demolishable = Object.entries(me.landmarks)
       .filter(([id, built]) => built && CATALOG.landmarkById[id] && !CATALOG.landmarkById[id].builtByDefault)
@@ -1065,7 +1084,7 @@ function detectPendingChoices(state: GameState): PendingChoice[] {
 
   // 搬家公司:自骰 9-10,且自有非紫卡
   if (has('moving_co') && has('moving_co')!.activation.includes(sum)
-      && !isRenovationLocked(state, 'moving_co')
+     
       && countOf(me, 'moving_co') > 0) {
     const myNonPurple = Object.entries(me.buildings)
       .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
@@ -1078,18 +1097,23 @@ function detectPendingChoices(state: GameState): PendingChoice[] {
     }
   }
 
-  // 装修公司:自骰 8,且对手有非紫卡
+  // 装修公司:自骰 8,且对手有可装修(非紫且仍有"非装修态"张数)的卡
   if (has('renovation') && has('renovation')!.activation.includes(sum)
       && countOf(me, 'renovation') > 0) {
     const oppNonPurple = Object.entries(opp.buildings)
-      .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
+      .filter(([id, n]) => {
+        if (n <= 0) return false;
+        const c = CATALOG.byId[id];
+        if (!c || c.color === 'purple') return false;
+        return countOf(opp, id) > 0;
+      })
       .map(([id]) => id);
     if (oppNonPurple.length > 0) {
       out.push({ kind: 'renovation', playerId: active, options: oppNonPurple });
     }
   }
 
-  // 会展中心:自骰 11-12,且己方有非紫卡可激活
+  // 会展中心:自骰 10,且己方有非紫卡可激活
   if (has('exhibit_hall') && has('exhibit_hall')!.activation.includes(sum)
       && countOf(me, 'exhibit_hall') > 0) {
     const myNonPurpleForExhibit = Object.entries(me.buildings)
@@ -1100,15 +1124,11 @@ function detectPendingChoices(state: GameState): PendingChoice[] {
     }
   }
 
-  // 科技公司:自骰 10,主动玩家选择是否放标记
-  if (has('tech_startup') && has('tech_startup')!.activation.includes(sum)
-      && countOf(me, 'tech_startup') > 0) {
-    out.push({ kind: 'tech', playerId: active });
-  }
+  // 科技公司:已迁移到 build 阶段主动投资,不再通过 PendingChoice 处理
 
   // 商业中心(基础紫 6):双方都有非紫卡时,主动玩家选要换的双方卡牌
   if (has('business_ctr') && has('business_ctr')!.activation.includes(sum)
-      && !isRenovationLocked(state, 'business_ctr')
+     
       && countOf(me, 'business_ctr') > 0) {
     const myNonPurple = Object.entries(me.buildings)
       .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
@@ -1133,7 +1153,6 @@ export function submitChoice(
     | { kind: 'moving'; buildingId: string }
     | { kind: 'renovation'; buildingId: string }
     | { kind: 'exhibit'; buildingId: string }
-    | { kind: 'tech'; place: boolean }
     | { kind: 'business_take'; buildingId: string }
     | { kind: 'business_give'; buildingId: string }
 ): GameState {
@@ -1151,8 +1170,6 @@ export function submitChoice(
     rc.renovationLockId = payload.buildingId;
   } else if (payload.kind === 'exhibit') {
     rc.exhibitActivateId = payload.buildingId;
-  } else if (payload.kind === 'tech') {
-    rc.techPlace = payload.place;
   } else if (payload.kind === 'business_take') {
     rc.businessTakeId = payload.buildingId;
     // 追加第二步:从己方非紫卡里选一张送出去
@@ -1218,12 +1235,30 @@ function finalizeResolve(state: GameState): GameState {
     const me = s.players[active];
     const opp = s.players[opponent];
 
-    if (eff.wineryDisabled) {
+    // 装修态恢复:把装修中的卡张数减回去(本回合该卡未结算)
+    if (eff.renovationRestores && eff.renovationRestores.length > 0) {
+      for (const r of eff.renovationRestores) {
+        const tp = s.players[r.playerId];
+        if (!tp.underRenovation) continue;
+        const cur = tp.underRenovation[r.buildingId] ?? 0;
+        const dec = Math.min(cur, r.count);
+        if (dec > 0) {
+          tp.underRenovation[r.buildingId] = cur - dec;
+          if (tp.underRenovation[r.buildingId] === 0) delete tp.underRenovation[r.buildingId];
+          const cName = CATALOG.byId[r.buildingId]?.name ?? r.buildingId;
+          pushLog(s, active, `🛠️ ${tp.name}「${cName}」装修完成 ×${dec}(本回合未结算)`);
+        }
+      }
+    }
+    if (eff.wineryRenovate) {
       const cnt = me.buildings['winery'] ?? 0;
       if (cnt > 0) {
-        if (!me.disabled) me.disabled = {};
-        me.disabled['winery'] = (me.disabled['winery'] ?? 0) + cnt;
-        pushLog(s, active, `🍷 葡萄酒庄触发后翻面停用 ×${cnt}`);
+        if (!me.underRenovation) me.underRenovation = {};
+        // 注:此处把"未装修的所有 winery"全部进入装修态 — 即 cnt 减去当前 underRenovation
+        const already = me.underRenovation['winery'] ?? 0;
+        const add = Math.max(0, cnt - already);
+        me.underRenovation['winery'] = already + add;
+        if (add > 0) pushLog(s, active, `🍷 葡萄酒庄触发后进入装修态 ×${add}`);
       }
     }
     if (eff.demolish && eff.demolish > 0) {
@@ -1251,18 +1286,22 @@ function finalizeResolve(state: GameState): GameState {
         }
       }
     }
-    // 装修公司:**先解锁旧目标,再设置新目标**(规则:本卡再次触发即解除上次锁定)
-    if (eff.renovationUnlock && s.renovationLockedKind) {
-      const oldName = CATALOG.byId[s.renovationLockedKind]?.name ?? s.renovationLockedKind;
-      s.renovationLockedKind = null;
-      pushLog(s, active, `🛠️ 装修公司:解除上次对「${oldName}」的锁定`);
+    // 装修公司:把目标对手的对应卡牌全部"未装修张"放入装修态
+    if (eff.renovationTarget) {
+      const { playerId: tgt, buildingId: bid } = eff.renovationTarget;
+      const tp = s.players[tgt];
+      const total = tp.buildings[bid] ?? 0;
+      const already = tp.underRenovation?.[bid] ?? 0;
+      const add = Math.max(0, total - already);
+      if (add > 0) {
+        if (!tp.underRenovation) tp.underRenovation = {};
+        tp.underRenovation[bid] = already + add;
+        pushLog(s, active, `🛠️ 装修公司:对手「${tp.name}」的「${CATALOG.byId[bid].name}」进入装修态 ×${add}`);
+      }
     }
-    if (eff.renovationLock) {
-      s.renovationLockedKind = eff.renovationLock;
-      pushLog(s, active, `🛠️ 装修公司:全场锁定「${CATALOG.byId[eff.renovationLock].name}」`);
-    }
-    if (eff.techMarkerGain && eff.techMarkerGain > 0) {
-      me.techMarkers = (me.techMarkers ?? 0) + eff.techMarkerGain;
+    if (eff.techMarkersConsumed && eff.techMarkersConsumed > 0) {
+      me.techMarkers = Math.max(0, (me.techMarkers ?? 0) - eff.techMarkersConsumed);
+      pushLog(s, active, `💻 科技公司:抽税后清空标记 (-${eff.techMarkersConsumed})`);
     }
     // 会展中心:每次触发消耗 1 张,放回市场卡库
     if (eff.exhibitConsumed && (me.buildings['exhibit_hall'] ?? 0) > 0) {
@@ -1360,13 +1399,10 @@ export function buyBuilding(state: GameState, cardId: string): GameState {
   s.players[s.active].buildings[cardId] = (s.players[s.active].buildings[cardId] ?? 0) + 1;
   s.supply[cardId] -= 1;
   s.builtThisTurn = true;
-  // 修复:若该卡此前被翻面停用(如葡萄酒庄),新买的一张应是有效张
-  // 等价于"减少一张 disabled 计数",这样 effectiveCount 自然 +1
+  // 修复:新买的一张该卡应是"非装修态"(有效张)
+  // 等价于不增加 underRenovation 计数,因此不需特殊处理 — buildings ++ 就自动多 1 张有效
   const me2 = s.players[s.active];
-  if (me2.disabled && (me2.disabled[cardId] ?? 0) > 0) {
-    me2.disabled[cardId]! -= 1;
-    if (me2.disabled[cardId] === 0) delete me2.disabled[cardId];
-  }
+  void me2;
   if (card.cost < 0) {
     pushLog(s, s.active, `购买了「${card.name}」(从银行获得 ${-card.cost} 币)`);
   } else {
@@ -1406,6 +1442,27 @@ export function buyLandmark(state: GameState, landmarkId: string): GameState {
   return endTurnInternal(s);
 }
 
+/**
+ * 科技公司:build 阶段主动投资 1 币,techMarkers +1
+ *  - 仅自己 build 阶段可调用
+ *  - 必须持有 ≥1 张 tech_startup 且非装修中(countOf > 0)
+ *  - 必须有 ≥1 金币
+ *  - 本回合最多 1 次(techInvestedThisTurn 标志)
+ */
+export function investTechStartup(state: GameState): GameState {
+  if (state.phase !== 'build') return state;
+  if (state.techInvestedThisTurn) return state;
+  const me = state.players[state.active];
+  if (countOf(me, 'tech_startup') <= 0) return state;
+  if (me.coins < 1) return state;
+  const s = cloneState(state);
+  s.players[s.active].coins -= 1;
+  s.players[s.active].techMarkers = (s.players[s.active].techMarkers ?? 0) + 1;
+  s.techInvestedThisTurn = true;
+  pushLog(s, s.active, `💻 科技公司:投资 1 币(累计 ${s.players[s.active].techMarkers})`);
+  return s;
+}
+
 export function skipBuild(state: GameState): GameState {
   if (state.phase !== 'build') return state;
   const s = cloneState(state);
@@ -1437,6 +1494,7 @@ function endTurnInternal(s: GameState): GameState {
   s.lastRoll = null;
   s.rerollUsedThisTurn = false;
   s.builtThisTurn = false;
+  s.techInvestedThisTurn = false;
   s.phase = 'roll';
 
   // 闪光生命周期:freshIds 在被写入的那一回合产生,要保留给下一位玩家看一整回合,

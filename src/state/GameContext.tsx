@@ -9,6 +9,7 @@ import {
   buyLandmark,
   skipBuild,
   applyHarborBoost,
+  investTechStartup,
 } from '../data/engine';
 import type { GameState, GameMode } from '../data/types';
 
@@ -17,7 +18,6 @@ type ChoicePayload =
   | { kind: 'moving'; buildingId: string }
   | { kind: 'renovation'; buildingId: string }
   | { kind: 'exhibit'; buildingId: string }
-  | { kind: 'tech'; place: boolean }
   | { kind: 'business_take'; buildingId: string }
   | { kind: 'business_give'; buildingId: string };
 
@@ -30,6 +30,7 @@ type Action =
   | { type: 'RESOLVE_CHOICE'; payload: ChoicePayload }
   | { type: 'BUY_BUILDING'; cardId: string }
   | { type: 'BUY_LANDMARK'; landmarkId: string }
+  | { type: 'INVEST_TECH' }
   | { type: 'SKIP_BUILD' };
 
 function reducer(state: GameState, action: Action): GameState {
@@ -42,6 +43,7 @@ function reducer(state: GameState, action: Action): GameState {
     case 'RESOLVE_CHOICE': return submitChoice(state, action.payload);
     case 'BUY_BUILDING': return buyBuilding(state, action.cardId);
     case 'BUY_LANDMARK': return buyLandmark(state, action.landmarkId);
+    case 'INVEST_TECH': return investTechStartup(state);
     case 'SKIP_BUILD': return skipBuild(state);
     default: return state;
   }

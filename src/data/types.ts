@@ -15,11 +15,11 @@ export interface PlayerState {
   buildings: Record<string, number>;
   /** 已建成的地标 id 集合(含默认建成的 city_hall / harbor) */
   landmarks: Record<string, boolean>;
-  /** 百万富翁 · 翻面停用的建筑张数:卡牌 id -> 被停用的张数(<= buildings[id])
-   *  - 葡萄酒庄触发后该卡所有张数永久翻面停用
-   *  - 装修公司触发后,被指定的某种卡在所有玩家处全员翻面停用,直到本卡再次触发解除
-   *  - 翻面停用的卡:不被符号统计计入、不触发收益、但仍占据建筑数 */
-  disabled?: Record<string, number>;
+  /** 百万富翁 · 进入"装修态"的建筑张数:卡牌 id -> 装修中的张数(<= buildings[id])
+   *  - 葡萄酒庄触发后该玩家所有 winery 进入装修态
+   *  - 装修公司触发后,被指定的某种卡(在被指定的对手处)全部进入装修态
+   *  - 装修态的卡:不被符号统计计入、不触发收益;但下一次该卡触发点命中时,自动从装修态恢复(此次仍不结算) */
+  underRenovation?: Record<string, number>;
   /** 百万富翁 · 科技公司累计投资标记数 */
   techMarkers?: number;
 }
@@ -85,9 +85,9 @@ export interface GameState {
   extraTurnPending: boolean;
   /** 本回合是否已建造 */
   builtThisTurn: boolean;
+  /** 本回合主动玩家是否已投资过科技公司 */
+  techInvestedThisTurn?: boolean;
   winner: 0 | 1 | null;
-  /** 百万富翁 · 装修公司当前在全局锁定的卡 id(对所有玩家生效);null = 无锁定 */
-  renovationLockedKind?: string | null;
   /** 百万富翁 · 待用户决策的项(resolve 阶段产生,逐项决完后才进入 build) */
   pendingChoices?: PendingChoice[];
   /** 百万富翁 · 玩家累计决策(逐项填入,最终传给 computeIncomeBreakdown) */
@@ -102,7 +102,7 @@ export interface GameState {
  *  - moving        :搬家公司,主动玩家选择送给对手哪张非紫卡(可送 N 次)
  *  - renovation    :装修公司,主动玩家选择锁定对手的哪种非紫卡
  *  - exhibit       :会展中心,主动玩家选择对对手哪种非紫卡收税
- *  - tech          :科技公司,主动玩家选择"放标记"还是"不放"
+ *  - tech          :(已废弃)科技公司:旧版自骰 10 时是否放置标记;现已改为"build 阶段主动投资",不再需要选择项
  *  - business_take :商业中心,主动玩家选择从对手处拿走哪张非紫卡
  *  - business_give :商业中心,主动玩家选择给出去哪张非紫卡
  */
@@ -111,7 +111,6 @@ export type PendingChoice =
   | { kind: 'moving'; playerId: 0 | 1; options: string[] /* building ids */ }
   | { kind: 'renovation'; playerId: 0 | 1; options: string[] /* building ids */ }
   | { kind: 'exhibit'; playerId: 0 | 1; options: string[] /* building ids */ }
-  | { kind: 'tech'; playerId: 0 | 1 /* yes / no 选择 */ }
   | { kind: 'business_take'; playerId: 0 | 1; options: string[] /* opp building ids */ }
   | { kind: 'business_give'; playerId: 0 | 1; options: string[] /* my building ids */ };
 

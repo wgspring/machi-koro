@@ -82,19 +82,21 @@ export default function ChoiceModal() {
     );
   }
 
-  /* ------------------------- 装修公司:选锁定对手哪种卡 ------------------------- */
+  /* ------------------------- 装修公司:选要装修的对手卡 ------------------------- */
   if (head.kind === 'renovation') {
     const opp = state.players[head.playerId === 0 ? 1 : 0];
     return (
       <div className="cm__overlay">
         <div className="cm__modal cm__modal--reno">
-          <h3>🛠️ 装修公司 · {myName} 请选择要锁定的对手卡牌</h3>
-          <p className="cm__hint">对手每张该卡支付你 8 币,此后该卡<strong>全场停用</strong>(直到再次触发)</p>
+          <h3>🛠️ 装修公司 · {myName} 请选择要装修的对手卡牌</h3>
+          <p className="cm__hint">从该对手收 1 币/张;这些卡<strong>进入装修态</strong>,下次它的触发点命中时自动恢复(那一次仍不结算)</p>
           <div className="cm__list cm__list--grid">
             {head.options.map((id) => {
               const c = CATALOG.byId[id];
               if (!c) return null;
-              const n = opp.buildings[id] ?? 0;
+              const total = opp.buildings[id] ?? 0;
+              const reno = opp.underRenovation?.[id] ?? 0;
+              const eff = Math.max(0, total - reno);
               return (
                 <button
                   key={id}
@@ -102,7 +104,7 @@ export default function ChoiceModal() {
                   onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'renovation', buildingId: id } })}
                 >
                   <span className="cm__btnTitle">{c.name}</span>
-                  <span className="cm__btnMeta">对手 ×{n} · 收税 {n * 8} 币</span>
+                  <span className="cm__btnMeta">对手有效 ×{eff}{reno > 0 ? ` · 装修中 ${reno}` : ''} · 收 {eff} 币</span>
                   <span className="cm__btnDesc">{c.description}</span>
                 </button>
               );
@@ -140,36 +142,6 @@ export default function ChoiceModal() {
                 </button>
               );
             })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ------------------------- 科技公司:放/不放标记 ------------------------- */
-  if (head.kind === 'tech') {
-    const cur = me.techMarkers ?? 0;
-    return (
-      <div className="cm__overlay">
-        <div className="cm__modal cm__modal--tech">
-          <h3>💻 科技公司 · {myName} 是否放置 1 个投资标记?</h3>
-          <p className="cm__hint">
-            当前已有 <strong>{cur}</strong> 个标记。
-            放置后:对手骰 10 时,你将按总标记数从对手处收钱;但本回合此卡不直接出钱。
-          </p>
-          <div className="cm__btns">
-            <button
-              className="cm__btn cm__btn--yes"
-              onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'tech', place: true } })}
-            >
-              ✅ 放置标记(共 {cur + 1} 个)
-            </button>
-            <button
-              className="cm__btn cm__btn--no"
-              onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'tech', place: false } })}
-            >
-              ❌ 跳过(保持 {cur} 个)
-            </button>
           </div>
         </div>
       </div>

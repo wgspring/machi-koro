@@ -26,7 +26,7 @@ export type CardOrigin = 'base' | 'harbor' | 'millionaire';
  *  - cow    🐄 牛:牧场
  *  - gear   ⚙️ 齿轮:森林、矿山
  *  - business 🏢 公司:拆迁公司、借贷公司、搬家公司
- *  - major  🌆 大型(紫色)
+ *  - major  🗼 大型(紫色)
  */
 export type CardSymbol =
   | 'wheat' | 'cow' | 'gear'
@@ -182,9 +182,9 @@ const HARBOR_BUILDINGS: BuildingCard[] = [
  * 特殊机制说明:
  *  - 拆迁公司:自己骰 4 触发,自动拆掉 1 座地标(若有可拆),银行付 8 币
  *  - 借贷公司:购买时 cost=-5(银行付你 5 币);自己骰 5-6 时,付每位对手 2 币
- *  - 葡萄酒庄:触发后**永久翻面停用**(不可恢复)
- *  - 装修公司:触发后令"被指定的那种建筑"对**所有玩家**翻面停用,直到此卡再次被触发
- *  - 科技公司:每次触发可自愿放 1 个投资标记;别人骰特定点时按累计标记数 ×1 抽取
+ *  - 葡萄酒庄:触发后该玩家所有 winery **进入装修态**;
+ *  - 装修公司:触发后令"被指定的那种建筑"在**该对手处**进入装修态;下次该卡触发点命中时,这些卡会自动恢复(那一次仍不结算)
+ *  - 科技公司:每回合"自己回合"build 阶段中可主动投资 1 币(累计标记数);**自己** 骰 10 时,从对手处收走累计金币(然后清零)
  *  - 玉米田 / 杂货店:仅在你尚有 ≤2 / ≤1 地标时生效
  *  - 法国餐厅 / 会员俱乐部:仅当对方已建 ≥2 / ≥3 地标时生效
  *  - 公园:作为紫色大型建筑(非地标),自己骰 11-13 触发,所有玩家金币重新均分(向上取整)
@@ -202,14 +202,14 @@ const MILLIONAIRE_BUILDINGS: BuildingCard[] = [
   { id: 'general_store', name: '杂货店',   color: 'green', activation: [2],     cost: 0, supply: 6, description: '+2 币(仅在你 ≤1 地标时;购物中心 +1)',                  symbol: 'bread',    mode: 'millionaire' },
   { id: 'demolition',    name: '拆迁公司', color: 'green', activation: [4],     cost: 2, supply: 6, description: '强制拆掉 1 座自己的地标,银行支付 8 币',                  symbol: 'business', mode: 'millionaire' },
   { id: 'loan_office',   name: '借贷公司', color: 'green', activation: [5, 6],  cost: -5, supply: 6, description: '购买时获得 5 币;之后骰 5-6,付每位对手 2 币',           symbol: 'business', mode: 'millionaire' },
-  { id: 'winery',        name: '葡萄酒庄', color: 'green', activation: [9],     cost: 3, supply: 6, description: '每张葡萄园 +6 币;触发后此卡永久翻面停用',                symbol: 'factory',  mode: 'millionaire' },
+  { id: 'winery',        name: '葡萄酒庄', color: 'green', activation: [9],     cost: 3, supply: 6, description: '每张葡萄园 +6 币;触发后此卡进入装修态,下次自己骰 9 时自动恢复(那一次仍不结算)',                symbol: 'factory',  mode: 'millionaire' },
   { id: 'moving_co',     name: '搬家公司', color: 'green', activation: [9, 10], cost: 2, supply: 6, description: '送一张自己的非紫色建筑给指定对手,然后从他处拿 4 币',     symbol: 'business', mode: 'millionaire' },
   { id: 'soda_factory',  name: '饮料工厂', color: 'green', activation: [11],    cost: 5, supply: 6, description: '所有玩家每张 ☕ 杯型建筑 +1 币',                          symbol: 'factory',  mode: 'millionaire' },
 
   // 🟪 紫色 · 大型(每位玩家上限 1 张)
-  { id: 'renovation',    name: '装修公司', color: 'purple',activation: [8],     cost: 4, supply: 4, description: '指定对手某种非紫色建筑,从所有持有者收 1 币/张;该种全员翻面停用,直到本卡再次触发', symbol: 'major', mode: 'millionaire' },
-  { id: 'tech_startup',  name: '科技公司', color: 'purple',activation: [10],    cost: 1, supply: 4, description: '可自愿在此卡上放 1 个投资标记;别人骰 10 时,按累计标记数 ×1 从掷骰者抽取',     symbol: 'major', mode: 'millionaire' },
-  { id: 'exhibit_hall',  name: '会展中心', color: 'purple',activation: [11, 12], cost: 7, supply: 4, description: '激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库',                       symbol: 'major', mode: 'millionaire' },
+  { id: 'renovation',    name: '装修公司', color: 'purple',activation: [8],     cost: 4, supply: 4, description: '指定一名对手的某种非紫色建筑,从该对手收 1 币/张;这些卡进入装修态,下次该卡触发点命中时自动恢复(那一次仍不结算)', symbol: 'major', mode: 'millionaire' },
+  { id: 'tech_startup',  name: '科技公司', color: 'purple',activation: [10],    cost: 1, supply: 4, description: '建成后每回合 build 阶段可花 1 币累计 1 个标记;自己骰 10 时,从对手处收走累计金币(然后清零)',     symbol: 'major', mode: 'millionaire' },
+  { id: 'exhibit_hall',  name: '会展中心', color: 'purple',activation: [10],     cost: 7, supply: 4, description: '激活己方一种非紫色建筑的全部张数,然后将本卡放回市场卡库',                       symbol: 'major', mode: 'millionaire' },
   { id: 'park',          name: '公园',     color: 'purple',activation: [11, 12, 13], cost: 3, supply: 4, description: '所有玩家金币重新均分(向上取整)',                                  symbol: 'major', mode: 'millionaire' },
 ];
 

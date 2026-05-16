@@ -228,11 +228,13 @@
 }
 .pp__count { font-weight: 700; }
 .pp__count--tech {
-  background: rgba(99, 102, 241, .25);
-  color: #6366f1;
+  background: #6366f1;
+  color: #fff;
   border-radius: 4px;
-  padding: 0 4px;
+  padding: 0 5px;
   font-size: .68rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.25) inset;
 }
 .pp__count--off {
   background: rgba(148, 163, 184, .25);
@@ -242,6 +244,24 @@
   font-size: .68rem;
 }
 .pp__bld--off { opacity: .55; text-decoration: line-through; }
+
+/* 悬浮文字提示:仅展示效果描述。位置完全由 JS 通过 ref 命令式设置,CSS 不参与动画与定位。 */
+.pp__bldTip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(28, 32, 40, .95);
+  color: #f3f4f6;
+  font-size: .78rem;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .3);
+  white-space: normal;
+  word-break: break-word;
+}
 .pp__empty {
   color: #aaa;
   font-size: .8rem;
