@@ -146,7 +146,7 @@ const BASE_BUILDINGS: BuildingCard[] = [
   // 🟪 紫色 · 大型设施(仅自己骰出时触发,每位玩家上限 1 张)
   { id: 'stadium',       name: '体育馆',   color: 'purple',activation: [6],     cost: 6, supply: 4, description: '从所有其他玩家各抢 2 币',          symbol: 'major',   mode: 'base' },
   { id: 'tv_station',    name: '电视台',   color: 'purple',activation: [6],     cost: 7, supply: 4, description: '指定一名玩家抢 5 币',              symbol: 'major',   mode: 'base' },
-  { id: 'business_ctr',  name: '商业中心', color: 'purple',activation: [6],     cost: 8, supply: 4, description: '与一名玩家交换 1 张非紫色建筑',    symbol: 'major',   mode: 'base' },
+  { id: 'business_ctr',  name: '商业中心', color: 'purple',activation: [6],     cost: 8, supply: 4, description: '与一名对手交换 2 张非紫卡',    symbol: 'major',   mode: 'base' },
 ];
 
 /**

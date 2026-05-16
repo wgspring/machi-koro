@@ -472,6 +472,10 @@ export interface ResolveChoices {
   renovationLockId?: string;
   exhibitActivateId?: string;
   techPlace?: boolean;
+  /** 商业中心:玩家选定要从对手处拿走的非紫卡 id */
+  businessTakeId?: string;
+  /** 商业中心:玩家选定要送出去的己方非紫卡 id(在 take 之后产生) */
+  businessGiveId?: string;
 }
 
 export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoices): IncomeBreakdown {
@@ -759,21 +763,46 @@ export function computeIncomeBreakdown(state: GameState, choices?: ResolveChoice
       const oppCards = Object.entries(players[opponent].buildings)
         .filter(([id, n]) => n > 0 && CATALOG.byId[id].color !== 'purple');
       if (myCards.length && oppCards.length) {
-        const give = myCards.sort((a, b) => CATALOG.byId[a[0]].cost - CATALOG.byId[b[0]].cost)[0][0];
-        const take = oppCards.sort((a, b) => CATALOG.byId[b[0]].cost - CATALOG.byId[a[0]].cost)[0][0];
-        trade = { giveId: give, takeId: take };
-        items[active].push({
-          cardName: `商业中心:换得「${CATALOG.byId[take].name}」`,
-          count: 1,
-          delta: 0,
-          category: 'purple-trade',
-        });
-        items[opponent].push({
-          cardName: `被换走「${CATALOG.byId[take].name}」`,
-          count: 1,
-          delta: 0,
-          category: 'purple-trade',
-        });
+        // 仅当玩家两步选择都已落定,才生成真正的交换;否则在预览中显示占位,等待玩家决策
+        const giveOk =
+          ch.businessGiveId
+          && (me.buildings[ch.businessGiveId] ?? 0) > 0
+          && CATALOG.byId[ch.businessGiveId]?.color !== 'purple';
+        const takeOk =
+          ch.businessTakeId
+          && (players[opponent].buildings[ch.businessTakeId] ?? 0) > 0
+          && CATALOG.byId[ch.businessTakeId]?.color !== 'purple';
+        if (giveOk && takeOk) {
+          const give = ch.businessGiveId!;
+          const take = ch.businessTakeId!;
+          trade = { giveId: give, takeId: take };
+          items[active].push({
+            cardName: `商业中心:换得「${CATALOG.byId[take].name}」,送出「${CATALOG.byId[give].name}」`,
+            count: 1,
+            delta: 0,
+            category: 'purple-trade',
+          });
+          items[opponent].push({
+            cardName: `被商业中心交换:失去「${CATALOG.byId[take].name}」,获得「${CATALOG.byId[give].name}」`,
+            count: 1,
+            delta: 0,
+            category: 'purple-trade',
+          });
+        } else {
+          // 等待玩家决策的占位条目(仅用于预览,不影响真实状态)
+          items[active].push({
+            cardName: '商业中心:等待选择交换的卡牌…',
+            count: 1,
+            delta: 0,
+            category: 'purple-trade',
+          });
+          items[opponent].push({
+            cardName: '商业中心:等待对方选择…',
+            count: 1,
+            delta: 0,
+            category: 'purple-trade',
+          });
+        }
       }
     } else if (card.id === 'publisher') {
       // 港口扩展 出版社(修订版):对手每张「☕ cup + 🥐 bread」建筑各让你抢 1 币
@@ -1077,6 +1106,22 @@ function detectPendingChoices(state: GameState): PendingChoice[] {
     out.push({ kind: 'tech', playerId: active });
   }
 
+  // 商业中心(基础紫 6):双方都有非紫卡时,主动玩家选要换的双方卡牌
+  if (has('business_ctr') && has('business_ctr')!.activation.includes(sum)
+      && !isRenovationLocked(state, 'business_ctr')
+      && countOf(me, 'business_ctr') > 0) {
+    const myNonPurple = Object.entries(me.buildings)
+      .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
+      .map(([id]) => id);
+    const oppNonPurple = Object.entries(opp.buildings)
+      .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
+      .map(([id]) => id);
+    if (myNonPurple.length > 0 && oppNonPurple.length > 0) {
+      out.push({ kind: 'business_take', playerId: active, options: oppNonPurple });
+      // give 步骤动态填充:在 submit business_take 时再 push,避免 stale options
+    }
+  }
+
   return out;
 }
 
@@ -1089,6 +1134,8 @@ export function submitChoice(
     | { kind: 'renovation'; buildingId: string }
     | { kind: 'exhibit'; buildingId: string }
     | { kind: 'tech'; place: boolean }
+    | { kind: 'business_take'; buildingId: string }
+    | { kind: 'business_give'; buildingId: string }
 ): GameState {
   if (state.phase !== 'resolve' || !state.pendingChoices || state.pendingChoices.length === 0) return state;
   const head = state.pendingChoices[0];
@@ -1106,6 +1153,19 @@ export function submitChoice(
     rc.exhibitActivateId = payload.buildingId;
   } else if (payload.kind === 'tech') {
     rc.techPlace = payload.place;
+  } else if (payload.kind === 'business_take') {
+    rc.businessTakeId = payload.buildingId;
+    // 追加第二步:从己方非紫卡里选一张送出去
+    const me = s.players[s.active];
+    const myNonPurple = Object.entries(me.buildings)
+      .filter(([id, n]) => n > 0 && CATALOG.byId[id] && CATALOG.byId[id].color !== 'purple')
+      .map(([id]) => id);
+    s.pendingChoices = s.pendingChoices!.slice(1);
+    s.pendingChoices.unshift({ kind: 'business_give', playerId: s.active, options: myNonPurple });
+    s._resolvedChoices = rc;
+    return s;
+  } else if (payload.kind === 'business_give') {
+    rc.businessGiveId = payload.buildingId;
   }
   s._resolvedChoices = rc;
   s.pendingChoices = s.pendingChoices!.slice(1);

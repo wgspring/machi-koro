@@ -113,19 +113,21 @@ export default function ChoiceModal() {
     );
   }
 
-  /* ------------------------- 会展中心:选对手哪种卡收税 ------------------------- */
+  /* ------------------------- 会展中心:选己方哪种非紫卡来激活全部张数 ------------------------- */
   if (head.kind === 'exhibit') {
-    const opp = state.players[head.playerId === 0 ? 1 : 0];
     return (
       <div className="cm__overlay">
         <div className="cm__modal cm__modal--exhibit">
-          <h3>🏟️ 会展中心 · {myName} 请选择对哪种对手卡收税</h3>
-          <p className="cm__hint">对手每张该卡支付你 4 币</p>
+          <h3>🏟️ 会展中心 · {myName} 请选择要激活的己方建筑</h3>
+          <p className="cm__hint">
+            激活该建筑的<strong>全部张数</strong>(蓝/绿色按银行收益,红色不抢钱);本卡随后被放回市场卡库。
+          </p>
           <div className="cm__list cm__list--grid">
             {head.options.map((id) => {
               const c = CATALOG.byId[id];
               if (!c) return null;
-              const n = opp.buildings[id] ?? 0;
+              const n = me.buildings[id] ?? 0;
+              const colorIcon = c.color === 'blue' ? '🟦' : c.color === 'green' ? '🟩' : c.color === 'red' ? '🟥' : '🟪';
               return (
                 <button
                   key={id}
@@ -133,7 +135,8 @@ export default function ChoiceModal() {
                   onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'exhibit', buildingId: id } })}
                 >
                   <span className="cm__btnTitle">{c.name}</span>
-                  <span className="cm__btnMeta">对手 ×{n} · 收税 {n * 4} 币</span>
+                  <span className="cm__btnMeta">{colorIcon} · 你有 ×{n} · 触发点 {c.activation.join('/')}</span>
+                  <span className="cm__btnDesc">{c.description}</span>
                 </button>
               );
             })}
@@ -167,6 +170,70 @@ export default function ChoiceModal() {
             >
               ❌ 跳过(保持 {cur} 个)
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------- 商业中心 · 第一步:选要从对手处拿走的卡 ------------------------- */
+  if (head.kind === 'business_take') {
+    const opp = state.players[head.playerId === 0 ? 1 : 0];
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--business">
+          <h3>🏢 商业中心 · {myName} 第 1 步:选择要从对手处拿走的卡牌</h3>
+          <p className="cm__hint">下一步你将从自己手中选 1 张非紫卡作为交换</p>
+          <div className="cm__list cm__list--grid">
+            {head.options.map((id) => {
+              const c = CATALOG.byId[id];
+              if (!c) return null;
+              const n = opp.buildings[id] ?? 0;
+              return (
+                <button
+                  key={id}
+                  className={`cm__btn cm__btn--card cm__btn--${c.color}`}
+                  onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'business_take', buildingId: id } })}
+                >
+                  <span className="cm__btnTitle">{c.name}</span>
+                  <span className="cm__btnMeta">{c.color === 'blue' ? '🟦' : c.color === 'green' ? '🟩' : '🟥'} · 成本 {c.cost} 币 · 对手 ×{n}</span>
+                  <span className="cm__btnDesc">{c.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ------------------------- 商业中心 · 第二步:选要送出去的己方卡 ------------------------- */
+  if (head.kind === 'business_give') {
+    const rc = state._resolvedChoices ?? {};
+    const takeId = rc.businessTakeId;
+    const takeName = takeId ? CATALOG.byId[takeId]?.name ?? '?' : '?';
+    return (
+      <div className="cm__overlay">
+        <div className="cm__modal cm__modal--business">
+          <h3>🏢 商业中心 · {myName} 第 2 步:选择要送出去的卡牌</h3>
+          <p className="cm__hint">你将获得「{takeName}」并送出 1 张自己的非紫卡</p>
+          <div className="cm__list cm__list--grid">
+            {head.options.map((id) => {
+              const c = CATALOG.byId[id];
+              if (!c) return null;
+              const n = me.buildings[id] ?? 0;
+              return (
+                <button
+                  key={id}
+                  className={`cm__btn cm__btn--card cm__btn--${c.color}`}
+                  onClick={() => dispatch({ type: 'RESOLVE_CHOICE', payload: { kind: 'business_give', buildingId: id } })}
+                >
+                  <span className="cm__btnTitle">{c.name}</span>
+                  <span className="cm__btnMeta">{c.color === 'blue' ? '🟦' : c.color === 'green' ? '🟩' : '🟥'} · 成本 {c.cost} 币 · 你有 ×{n}</span>
+                  <span className="cm__btnDesc">{c.description}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

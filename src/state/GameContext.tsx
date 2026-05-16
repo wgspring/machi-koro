@@ -17,7 +17,9 @@ type ChoicePayload =
   | { kind: 'moving'; buildingId: string }
   | { kind: 'renovation'; buildingId: string }
   | { kind: 'exhibit'; buildingId: string }
-  | { kind: 'tech'; place: boolean };
+  | { kind: 'tech'; place: boolean }
+  | { kind: 'business_take'; buildingId: string }
+  | { kind: 'business_give'; buildingId: string };
 
 type Action =
   | { type: 'RESTART'; name1?: string; name2?: string; mode?: GameMode }

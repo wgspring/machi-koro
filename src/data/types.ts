@@ -103,13 +103,17 @@ export interface GameState {
  *  - renovation    :装修公司,主动玩家选择锁定对手的哪种非紫卡
  *  - exhibit       :会展中心,主动玩家选择对对手哪种非紫卡收税
  *  - tech          :科技公司,主动玩家选择"放标记"还是"不放"
+ *  - business_take :商业中心,主动玩家选择从对手处拿走哪张非紫卡
+ *  - business_give :商业中心,主动玩家选择给出去哪张非紫卡
  */
 export type PendingChoice =
   | { kind: 'demolish'; playerId: 0 | 1; options: string[] /* landmark ids */ }
   | { kind: 'moving'; playerId: 0 | 1; options: string[] /* building ids */ }
   | { kind: 'renovation'; playerId: 0 | 1; options: string[] /* building ids */ }
   | { kind: 'exhibit'; playerId: 0 | 1; options: string[] /* building ids */ }
-  | { kind: 'tech'; playerId: 0 | 1 /* yes / no 选择 */ };
+  | { kind: 'tech'; playerId: 0 | 1 /* yes / no 选择 */ }
+  | { kind: 'business_take'; playerId: 0 | 1; options: string[] /* opp building ids */ }
+  | { kind: 'business_give'; playerId: 0 | 1; options: string[] /* my building ids */ };
 
 export interface CatalogIndex {
   byId: Record<string, BuildingCard>;
