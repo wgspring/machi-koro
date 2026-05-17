@@ -46,12 +46,22 @@
   filter: grayscale(.5);
 }
 
-/* 卡池滚动容器 */
+/* 卡池滚动容器:flex 列布局 + 子项 margin: auto 实现"空间足时居中,空间不足时滚动" */
 .market__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* grid 作为唯一的 flex 子项:
+ * - margin: auto 0 在父容器空间充裕时撑出上下相等留白,实现垂直居中
+ * - 父容器空间不足时,auto margin 会折叠为 0,grid 顶对齐,父容器 overflow-y 接管滚动 */
+.market__scroll > .market__grid {
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .market__row {
@@ -61,12 +71,6 @@
   margin-right: auto;
 }
 .market__row:first-child { margin-top: 0; }
-/* harbor 模式:外层 grid 也用相同宽度 */
-.market__grid {
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
 
 /* 标题行:与卡片网格使用相同 5 列,允许标题按 span 跨列 */
 .market__titles {
@@ -85,6 +89,12 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
+  max-width: 900px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  /* 在 flex 父容器中,内容超出可视区时不被压缩,而是触发父容器的滚动条 */
+  flex-shrink: 0;
 }
 .card {
   position: relative;
@@ -97,7 +107,10 @@
   transition: transform .12s, box-shadow .15s, border-color .15s;
   font-family: inherit;
   color: #2c2c2c;
-  height: 150px;
+  /* 默认高度;具体模式可在 .market__grid--xxx .card 中覆盖。
+   * 用固定 height 而非 min/max-height,让 grid 行高确定,
+   * 父容器才能可靠判断内容是否超过可视高度,从而切换居中 / 滚动 */
+  height: 180px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;     /* 顶部信息 / 底部价格剩余 */
@@ -221,18 +234,16 @@
   .card--purple { --card-icon-bg: #2c1c44; --card-icon-bd: #523580; }
 }
 
-/* ===== 港口扩展:10 种统一市场(5 列 × 2 行) ===== */
-/* harbor 模式:卡片更高,网格上方留空 */
-.market__grid--harbor {
-  margin-top: 80px;
-}
-.market__grid--harbor .card {
-  height: 200px;
-}
-/* 基础版:卡片紧凑一些 */
+/* ===== 各模式卡片高度差异化 ===== */
+/* 基础版:3 行 × 5 列,卡片紧凑一点 */
 .market__grid--base .card {
-  height: 160px;
+  height: 170px;
 }
+/* 港口扩展 / 百万富翁 / 三合一:2 行 × 5 列,卡片稍高,展示更充分 */
+.market__grid--harbor .card {
+  height: 220px;
+}
+
 .card--empty {
   border: 2px dashed #cdd3dd;
   background: #f6f7fa;
