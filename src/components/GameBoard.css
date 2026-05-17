@@ -1,6 +1,4 @@
-/* ============ 全屏不滚动外壳 + 玩家主题色 ============ */
-html, body, #root { height: 100%; }
-body { overflow: hidden; }
+/* ============ 玩家主题色 ============ */
 
 /* 玩家主题色 CSS 变量(供子组件统一引用) */
 :root {
@@ -13,7 +11,9 @@ body { overflow: hidden; }
 }
 
 .board {
+  /* 全屏不滚动外壳:用 100vh 自管,避免污染全局 body/html(否则 StartScreen 无法滚动) */
   height: 100vh;
+  overflow: hidden;
   display: grid;
   grid-template-rows: auto 1fr;
   padding: 8px 12px 10px;
@@ -178,8 +178,7 @@ body { overflow: hidden; }
 
 /* ============ 窄屏降级:纵向堆叠仍允许滚动 ============ */
 @media (max-width: 980px) {
-  body { overflow: auto; }
-  .board { height: auto; min-height: 100vh; }
+  .board { height: auto; min-height: 100vh; overflow: visible; }
   .board__body {
     grid-template-columns: 1fr;
     overflow: visible;
