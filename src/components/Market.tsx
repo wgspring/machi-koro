@@ -14,27 +14,6 @@ const COLOR_CLASS: Record<CardColor, string> = {
 
 const COLOR_ORDER: Record<CardColor, number> = { blue: 0, green: 1, red: 2, purple: 3 };
 
-interface GroupSeg {
-  color: CardColor;
-  label: string;
-  span: number;
-}
-interface RowDef {
-  segments: GroupSeg[];
-}
-
-/** 基础版:全部 15 种始终展示,按颜色分行 */
-const ROWS_BASE: RowDef[] = [
-  { segments: [{ color: 'blue', label: '🟦 初级产业', span: 5 }] },
-  { segments: [{ color: 'green', label: '🟩 商业设施', span: 5 }] },
-  {
-    segments: [
-      { color: 'red', label: '🟥 餐饮业', span: 2 },
-      { color: 'purple', label: '🟪 大型设施', span: 3 },
-    ],
-  },
-];
-
 const fmtAct = (a: number[]) =>
   a.length === 1 ? `${a[0]}` : `${a[0]}-${a[a.length - 1]}`;
 
@@ -176,6 +155,11 @@ export default function Market() {
 
   /* ----------- 基础版:全部 15 张始终展示 ------------- */
   const cols = 5;
+  const baseCards = [...allCards].sort((a, b) => {
+    const co = COLOR_ORDER[a.color] - COLOR_ORDER[b.color];
+    if (co !== 0) return co;
+    return a.activation[0] - b.activation[0];
+  });
   return (
     <div className="market">
       <div className="market__head">
@@ -191,35 +175,12 @@ export default function Market() {
       </div>
 
       <div className="market__scroll">
-        {ROWS_BASE.map((row, idx) => (
-          <section key={idx} className="market__row">
-            <div
-              className="market__titles"
-              style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-            >
-              {row.segments.map((seg) => (
-                <h4
-                  key={seg.color}
-                  className="market__title"
-                  style={{ gridColumn: `span ${seg.span}` }}
-                >
-                  {seg.label}
-                </h4>
-              ))}
-            </div>
-            <div
-              className="market__grid market__grid--base"
-              style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-            >
-              {row.segments.flatMap((seg) =>
-                allCards
-                  .filter((b) => b.color === seg.color)
-                  .sort((a, b) => a.activation[0] - b.activation[0])
-                  .map(renderCard),
-              )}
-            </div>
-          </section>
-        ))}
+        <div
+          className="market__grid market__grid--base"
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
+          {baseCards.map(renderCard)}
+        </div>
       </div>
     </div>
   );
