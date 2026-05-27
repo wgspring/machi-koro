@@ -33,6 +33,14 @@
 ---
 
 ## 🚀 快速开始
+Docker 一键启动
+
+```
+# Docker 一键启动，浏览器 打开 http://localhost:3000 开玩
+docker compose up -d
+```
+
+无Docker，源码编译运行：
 
 ```bash
 # 安装依赖
