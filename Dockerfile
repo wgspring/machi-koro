@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm config set registry https://registry.npmmirror.com && npm install
+RUN npm config set registry https://registry.npmjs.org && npm install && npm install @rolldown/binding-linux-arm64-gnu@1.0.0
 
 COPY . .
 
