@@ -162,7 +162,7 @@ const HARBOR_BUILDINGS: BuildingCard[] = [
   { id: 'tuna_boat',     name: '金枪鱼船', color: 'blue',  activation: [12,13,14], cost: 5, supply: 6, description: '建有港口时,触发时另投 2 颗骰子,所有持有者按其点数和 +币', symbol: 'fish', mode: 'harbor', requiresHarbor: true },
 
   // 🟩 绿色
-  { id: 'flower_shop',   name: '花店',     color: 'green', activation: [6],     cost: 1, supply: 6, description: '每张 🌷 花田 +1 币(购物中心 +1)',     symbol: 'bread',   mode: 'harbor' },
+  { id: 'flower_shop',   name: '花店',     color: 'green', activation: [6],     cost: 1, supply: 6, description: '每张 🌾 花田 +1 币(购物中心 +1)',     symbol: 'bread',   mode: 'harbor' },
   { id: 'food_warehouse',name: '食品仓库', color: 'green', activation: [12,13], cost: 2, supply: 6, description: '每张 ☕ 杯型建筑 +2 币',                symbol: 'factory', mode: 'harbor' },
 
   // 🟥 红色

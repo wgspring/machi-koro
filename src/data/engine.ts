@@ -1156,6 +1156,15 @@ export function submitChoice(
   // 把选择写入累加器
   if (payload.kind === 'demolish') {
     rc.demolishLandmarkIds = (rc.demolishLandmarkIds ?? []).concat(payload.landmarkId);
+    s.pendingChoices = s.pendingChoices!.map((choice) => {
+      if (choice.kind === 'demolish') {
+        return {
+          ...choice,
+          options: choice.options.filter((id) => id !== payload.landmarkId),
+        };
+      }
+      return choice;
+    });
   } else if (payload.kind === 'moving') {
     rc.movingGiveIds = (rc.movingGiveIds ?? []).concat(payload.buildingId);
   } else if (payload.kind === 'renovation') {

@@ -25,3 +25,4 @@ dist-ssr
 
 # Backup files (smart-mcp 自动生成)
 *.bak
+package-lock.json
